@@ -7,13 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8C049FEE2BBD19DE00746236 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 8C049FED2BBD19DE00746236 /* Lottie */; };
+		8C049FF02BBD19F800746236 /* lottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C049FEF2BBD19F800746236 /* lottieView.swift */; };
 		8C43846B2B9DFF8A0090588B /* XIVEApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43846A2B9DFF8A0090588B /* XIVEApp.swift */; };
-		8C43846D2B9DFF8A0090588B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43846C2B9DFF8A0090588B /* ContentView.swift */; };
 		8C43846F2B9DFF8B0090588B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C43846E2B9DFF8B0090588B /* Assets.xcassets */; };
 		8C4384722B9DFF8B0090588B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C4384712B9DFF8B0090588B /* Preview Assets.xcassets */; };
 		8C43847C2B9DFF8B0090588B /* XIVETests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43847B2B9DFF8B0090588B /* XIVETests.swift */; };
 		8C4384862B9DFF8B0090588B /* XIVEUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4384852B9DFF8B0090588B /* XIVEUITests.swift */; };
 		8C4384882B9DFF8B0090588B /* XIVEUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4384872B9DFF8B0090588B /* XIVEUITestsLaunchTests.swift */; };
+		8CB22F162BBD02CF0020324E /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F152BBD02CF0020324E /* LoginView.swift */; };
+		8CB22F182BBD02DE0020324E /* LoginModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F172BBD02DE0020324E /* LoginModel.swift */; };
+		8CB22F1A2BBD02E60020324E /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F192BBD02E60020324E /* LoginViewModel.swift */; };
+		8CB22F1D2BBD03090020324E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F1C2BBD03090020324E /* OnboardingView.swift */; };
+		8CB22F1F2BBD03130020324E /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F1E2BBD03130020324E /* OnboardingViewModel.swift */; };
+		8CB22F212BBD031A0020324E /* OnboardingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F202BBD031A0020324E /* OnboardingModel.swift */; };
+		8CB22F242BBD03410020324E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F232BBD03410020324E /* HomeView.swift */; };
+		8CB22F262BBD03480020324E /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F252BBD03480020324E /* HomeViewModel.swift */; };
+		8CB22F282BBD03570020324E /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F272BBD03570020324E /* HomeModel.swift */; };
+		8CB22F2A2BBD03E10020324E /* LandingPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB22F292BBD03E10020324E /* LandingPage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,9 +45,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8C049FEF2BBD19F800746236 /* lottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = lottieView.swift; sourceTree = "<group>"; };
 		8C4384672B9DFF8A0090588B /* XIVE.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XIVE.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C43846A2B9DFF8A0090588B /* XIVEApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XIVEApp.swift; sourceTree = "<group>"; };
-		8C43846C2B9DFF8A0090588B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8C43846E2B9DFF8B0090588B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8C4384712B9DFF8B0090588B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8C4384772B9DFF8B0090588B /* XIVETests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XIVETests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +55,16 @@
 		8C4384812B9DFF8B0090588B /* XIVEUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XIVEUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C4384852B9DFF8B0090588B /* XIVEUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XIVEUITests.swift; sourceTree = "<group>"; };
 		8C4384872B9DFF8B0090588B /* XIVEUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XIVEUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		8CB22F152BBD02CF0020324E /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		8CB22F172BBD02DE0020324E /* LoginModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginModel.swift; sourceTree = "<group>"; };
+		8CB22F192BBD02E60020324E /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewModel.swift; sourceTree = "<group>"; };
+		8CB22F1C2BBD03090020324E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		8CB22F1E2BBD03130020324E /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
+		8CB22F202BBD031A0020324E /* OnboardingModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingModel.swift; sourceTree = "<group>"; };
+		8CB22F232BBD03410020324E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		8CB22F252BBD03480020324E /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		8CB22F272BBD03570020324E /* HomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeModel.swift; sourceTree = "<group>"; };
+		8CB22F292BBD03E10020324E /* LandingPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingPage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C049FEE2BBD19DE00746236 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +93,42 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8C049FF32BBD1D0900746236 /* app */ = {
+			isa = PBXGroup;
+			children = (
+				8C43846A2B9DFF8A0090588B /* XIVEApp.swift */,
+			);
+			path = app;
+			sourceTree = "<group>";
+		};
+		8C049FF42BBD1D1500746236 /* splash */ = {
+			isa = PBXGroup;
+			children = (
+				8CB22F292BBD03E10020324E /* LandingPage.swift */,
+				8C049FEF2BBD19F800746236 /* lottieView.swift */,
+			);
+			path = splash;
+			sourceTree = "<group>";
+		};
+		8C049FF52BBD1DC500746236 /* design */ = {
+			isa = PBXGroup;
+			children = (
+				8C43846E2B9DFF8B0090588B /* Assets.xcassets */,
+			);
+			path = design;
+			sourceTree = "<group>";
+		};
+		8C049FF62BBD1DDB00746236 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				8C049FF42BBD1D1500746236 /* splash */,
+				8CB22F222BBD03290020324E /* home */,
+				8CB22F1B2BBD02EE0020324E /* onboarding */,
+				8CB22F142BBD02BA0020324E /* login */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
 		8C43845E2B9DFF8A0090588B = {
 			isa = PBXGroup;
 			children = (
@@ -94,9 +152,9 @@
 		8C4384692B9DFF8A0090588B /* XIVE */ = {
 			isa = PBXGroup;
 			children = (
-				8C43846A2B9DFF8A0090588B /* XIVEApp.swift */,
-				8C43846C2B9DFF8A0090588B /* ContentView.swift */,
-				8C43846E2B9DFF8B0090588B /* Assets.xcassets */,
+				8C049FF32BBD1D0900746236 /* app */,
+				8C049FF62BBD1DDB00746236 /* UI */,
+				8C049FF52BBD1DC500746236 /* design */,
 				8C4384702B9DFF8B0090588B /* Preview Content */,
 			);
 			path = XIVE;
@@ -127,6 +185,36 @@
 			path = XIVEUITests;
 			sourceTree = "<group>";
 		};
+		8CB22F142BBD02BA0020324E /* login */ = {
+			isa = PBXGroup;
+			children = (
+				8CB22F152BBD02CF0020324E /* LoginView.swift */,
+				8CB22F172BBD02DE0020324E /* LoginModel.swift */,
+				8CB22F192BBD02E60020324E /* LoginViewModel.swift */,
+			);
+			path = login;
+			sourceTree = "<group>";
+		};
+		8CB22F1B2BBD02EE0020324E /* onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				8CB22F1C2BBD03090020324E /* OnboardingView.swift */,
+				8CB22F1E2BBD03130020324E /* OnboardingViewModel.swift */,
+				8CB22F202BBD031A0020324E /* OnboardingModel.swift */,
+			);
+			path = onboarding;
+			sourceTree = "<group>";
+		};
+		8CB22F222BBD03290020324E /* home */ = {
+			isa = PBXGroup;
+			children = (
+				8CB22F232BBD03410020324E /* HomeView.swift */,
+				8CB22F252BBD03480020324E /* HomeViewModel.swift */,
+				8CB22F272BBD03570020324E /* HomeModel.swift */,
+			);
+			path = home;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -143,6 +231,9 @@
 			dependencies = (
 			);
 			name = XIVE;
+			packageProductDependencies = (
+				8C049FED2BBD19DE00746236 /* Lottie */,
+			);
 			productName = XIVE;
 			productReference = 8C4384672B9DFF8A0090588B /* XIVE.app */;
 			productType = "com.apple.product-type.application";
@@ -215,6 +306,9 @@
 				Base,
 			);
 			mainGroup = 8C43845E2B9DFF8A0090588B;
+			packageReferences = (
+				8C049FEC2BBD19DE00746236 /* XCRemoteSwiftPackageReference "lottie-ios" */,
+			);
 			productRefGroup = 8C4384682B9DFF8A0090588B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -257,7 +351,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8C43846D2B9DFF8A0090588B /* ContentView.swift in Sources */,
+				8CB22F242BBD03410020324E /* HomeView.swift in Sources */,
+				8CB22F162BBD02CF0020324E /* LoginView.swift in Sources */,
+				8CB22F2A2BBD03E10020324E /* LandingPage.swift in Sources */,
+				8CB22F282BBD03570020324E /* HomeModel.swift in Sources */,
+				8CB22F182BBD02DE0020324E /* LoginModel.swift in Sources */,
+				8CB22F262BBD03480020324E /* HomeViewModel.swift in Sources */,
+				8C049FF02BBD19F800746236 /* lottieView.swift in Sources */,
+				8CB22F1D2BBD03090020324E /* OnboardingView.swift in Sources */,
+				8CB22F212BBD031A0020324E /* OnboardingModel.swift in Sources */,
+				8CB22F1A2BBD02E60020324E /* LoginViewModel.swift in Sources */,
+				8CB22F1F2BBD03130020324E /* OnboardingViewModel.swift in Sources */,
 				8C43846B2B9DFF8A0090588B /* XIVEApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -588,6 +692,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8C049FEC2BBD19DE00746236 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.4.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8C049FED2BBD19DE00746236 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8C049FEC2BBD19DE00746236 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8C43845F2B9DFF8A0090588B /* Project object */;
 }
