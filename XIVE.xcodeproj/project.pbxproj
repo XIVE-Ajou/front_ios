@@ -14,6 +14,8 @@
 		8C09B4162BE60A8F008C8AB1 /* SettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C09B4152BE60A8F008C8AB1 /* SettingView.swift */; };
 		8C09B4182BE60D59008C8AB1 /* ServiceTermView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C09B4172BE60D59008C8AB1 /* ServiceTermView.swift */; };
 		8C09B41A2BE60D68008C8AB1 /* PrivacyPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C09B4192BE60D68008C8AB1 /* PrivacyPolicy.swift */; };
+		8C0CFE7E2BFE722900F5ACF9 /* Navigation+Extention.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0CFE7D2BFE722900F5ACF9 /* Navigation+Extention.swift */; };
+		8C0CFE802BFE723700F5ACF9 /* TicketDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C0CFE7F2BFE723700F5ACF9 /* TicketDetailView.swift */; };
 		8C43846B2B9DFF8A0090588B /* XIVEApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C43846A2B9DFF8A0090588B /* XIVEApp.swift */; };
 		8C43846F2B9DFF8B0090588B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C43846E2B9DFF8B0090588B /* Assets.xcassets */; };
 		8C4384722B9DFF8B0090588B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8C4384712B9DFF8B0090588B /* Preview Assets.xcassets */; };
@@ -44,9 +46,7 @@
 		8CC8841A2BCD239800208563 /* KakaoSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 8CC884192BCD239800208563 /* KakaoSDKCommon */; };
 		8CEE4F152BEABB26007DAA1A /* secret.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F142BEABB26007DAA1A /* secret.swift */; };
 		8CEE4F172BEABBCD007DAA1A /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F162BEABBCD007DAA1A /* WebView.swift */; };
-		8CEE4F1F2BED4192007DAA1A /* TicketDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F1E2BED4192007DAA1A /* TicketDetailView.swift */; };
 		8CEE4F272BF1464C007DAA1A /* SettingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F262BF1464C007DAA1A /* SettingViewModel.swift */; };
-		8CEE4F292BF16053007DAA1A /* Navigation+Extention.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F282BF16053007DAA1A /* Navigation+Extention.swift */; };
 		8CEE4F2B2BF1C8A8007DAA1A /* ColorExtention.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F2A2BF1C8A8007DAA1A /* ColorExtention.swift */; };
 		8CEE4F2E2BF1F662007DAA1A /* gifLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F2D2BF1F662007DAA1A /* gifLoader.swift */; };
 		8CEE4F302BF1FDDB007DAA1A /* GifImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEE4F2F2BF1FDDB007DAA1A /* GifImageView.swift */; };
@@ -88,6 +88,8 @@
 		8C09B4152BE60A8F008C8AB1 /* SettingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingView.swift; sourceTree = "<group>"; };
 		8C09B4172BE60D59008C8AB1 /* ServiceTermView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceTermView.swift; sourceTree = "<group>"; };
 		8C09B4192BE60D68008C8AB1 /* PrivacyPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicy.swift; sourceTree = "<group>"; };
+		8C0CFE7D2BFE722900F5ACF9 /* Navigation+Extention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Navigation+Extention.swift"; sourceTree = "<group>"; };
+		8C0CFE7F2BFE723700F5ACF9 /* TicketDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketDetailView.swift; sourceTree = "<group>"; };
 		8C4384672B9DFF8A0090588B /* XIVE.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XIVE.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C43846A2B9DFF8A0090588B /* XIVEApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XIVEApp.swift; sourceTree = "<group>"; };
 		8C43846E2B9DFF8B0090588B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -119,9 +121,7 @@
 		8CEE4F162BEABBCD007DAA1A /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
 		8CEE4F182BEAC0F9007DAA1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8CEE4F1A2BEAC230007DAA1A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		8CEE4F1E2BED4192007DAA1A /* TicketDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketDetailView.swift; sourceTree = "<group>"; };
 		8CEE4F262BF1464C007DAA1A /* SettingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingViewModel.swift; sourceTree = "<group>"; };
-		8CEE4F282BF16053007DAA1A /* Navigation+Extention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Navigation+Extention.swift"; sourceTree = "<group>"; };
 		8CEE4F2A2BF1C8A8007DAA1A /* ColorExtention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtention.swift; sourceTree = "<group>"; };
 		8CEE4F2D2BF1F662007DAA1A /* gifLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gifLoader.swift; sourceTree = "<group>"; };
 		8CEE4F2F2BF1FDDB007DAA1A /* GifImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GifImageView.swift; sourceTree = "<group>"; };
@@ -309,8 +309,8 @@
 				8CB22F252BBD03480020324E /* HomeViewModel.swift */,
 				8CB22F272BBD03570020324E /* HomeModel.swift */,
 				8C02261E2BE631FD008EA145 /* NFCViewModel.swift */,
-				8CEE4F1E2BED4192007DAA1A /* TicketDetailView.swift */,
 				8C874F552BFE0BA100B44906 /* ErrorView.swift */,
+				8C0CFE7F2BFE723700F5ACF9 /* TicketDetailView.swift */,
 			);
 			path = home;
 			sourceTree = "<group>";
@@ -328,9 +328,9 @@
 			children = (
 				8CEE4F2F2BF1FDDB007DAA1A /* GifImageView.swift */,
 				8C874F512BF95A2F00B44906 /* CustomDialogView.swift */,
-				8CEE4F282BF16053007DAA1A /* Navigation+Extention.swift */,
 				8CEE4F2A2BF1C8A8007DAA1A /* ColorExtention.swift */,
 				8CEE4F2D2BF1F662007DAA1A /* gifLoader.swift */,
+				8C0CFE7D2BFE722900F5ACF9 /* Navigation+Extention.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -481,6 +481,7 @@
 				8CEE4F302BF1FDDB007DAA1A /* GifImageView.swift in Sources */,
 				8CC8840B2BC52D1D00208563 /* OnboardingInformationState.swift in Sources */,
 				8CB22F242BBD03410020324E /* HomeView.swift in Sources */,
+				8C0CFE802BFE723700F5ACF9 /* TicketDetailView.swift in Sources */,
 				8CB22F162BBD02CF0020324E /* LoginView.swift in Sources */,
 				8CB22F282BBD03570020324E /* HomeModel.swift in Sources */,
 				8CB22F182BBD02DE0020324E /* LoginModel.swift in Sources */,
@@ -494,7 +495,6 @@
 				8CEE4F152BEABB26007DAA1A /* secret.swift in Sources */,
 				8C09B4162BE60A8F008C8AB1 /* SettingView.swift in Sources */,
 				8C874F562BFE0BA100B44906 /* ErrorView.swift in Sources */,
-				8CEE4F1F2BED4192007DAA1A /* TicketDetailView.swift in Sources */,
 				8CB22F1A2BBD02E60020324E /* LoginViewModel.swift in Sources */,
 				8CEE4F272BF1464C007DAA1A /* SettingViewModel.swift in Sources */,
 				8CB22F1F2BBD03130020324E /* OnboardingViewModel.swift in Sources */,
@@ -505,10 +505,10 @@
 				8C874F542BFB89C200B44906 /* OneToOneView.swift in Sources */,
 				8CEE4F2E2BF1F662007DAA1A /* gifLoader.swift in Sources */,
 				8C874F4E2BF6922E00B44906 /* WithdrawalView.swift in Sources */,
+				8C0CFE7E2BFE722900F5ACF9 /* Navigation+Extention.swift in Sources */,
 				8C874F522BF95A2F00B44906 /* CustomDialogView.swift in Sources */,
 				8C09B4182BE60D59008C8AB1 /* ServiceTermView.swift in Sources */,
 				8CC884092BC52D0900208563 /* OnboardingViewIndicator.swift in Sources */,
-				8CEE4F292BF16053007DAA1A /* Navigation+Extention.swift in Sources */,
 				8C43846B2B9DFF8A0090588B /* XIVEApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -681,12 +681,14 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = XIVE/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Please allow access to scan your tag.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -715,12 +717,14 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = XIVE/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Please allow access to scan your tag.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

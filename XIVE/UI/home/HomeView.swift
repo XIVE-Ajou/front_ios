@@ -197,7 +197,7 @@ struct HomeView: View {
 struct TicketDetailView: View {
     @State private var navigateToCalendar = false
     @State private var navigateToSetting = false
-    @State private var nfcButtonOffset: CGFloat = 0.0
+
     @ObservedObject private var nfcViewModel = NFCViewModel()
     var ticketData: [[String: Any]]
     
@@ -249,11 +249,6 @@ struct TicketDetailView: View {
             .background(Color.white) // 전체 배경을 흰색으로 설정
             .onAppear {
                 // 애니메이션 타이머 설정
-                Timer.scheduledTimer(withTimeInterval: 15.0, repeats: true) { _ in
-                    withAnimation(.easeInOut(duration: 2.0)) {
-                        nfcButtonOffset = (nfcButtonOffset == 0) ? -50 : 0
-                    }
-                }
 
                 nfcViewModel.urlDetected = { url in
                     self.handleURL(url)
@@ -316,8 +311,7 @@ struct TicketDetailView: View {
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: 10)
                     .padding(.bottom, 20)
                     .padding(.trailing, 15)
-            }
-            .offset(y: nfcButtonOffset) // 애니메이션을 위한 오프셋 추가
+            }// 애니메이션을 위한 오프셋 추가
         }
     }
     
