@@ -19,20 +19,7 @@ struct HomeView: View {
     @ObservedObject private var nfcViewModel = NFCViewModel()
     
     var body: some View {
-        //        Group {
-        //            if !ticketData.isEmpty {
-        //                TicketDetailView(ticketData: ticketData)
-        //            } else {
-        //                contentView
-        //            }
-        //        }
-        //        .navigationBarBackButtonHidden(true)
-        //        .preferredColorScheme(.light) // 라이트 모드로 고정
-        //        .onAppear {
-        //            // API 호출을 통해 티켓 데이터 확인
-        //            checkTickets()
-        //        }
-        TicketDetailView(ticketData: ticketData)
+        TicketDetailView(ticketData: ticketData, eventWebUrl: nfcViewModel.eventWebUrl)
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NFCSessionEnded"))) { _ in
                 // NFC 세션 종료 시 화면 리프레시
                 refreshTicketData()
@@ -82,7 +69,7 @@ struct HomeView: View {
                 
                 setupNFCButton()
                 
-                NavigationLink(destination: TicketDetailView(ticketData: ticketData), isActive: $showTicketDetail) {
+                NavigationLink(destination: TicketDetailView(ticketData: ticketData, eventWebUrl: nfcViewModel.eventWebUrl), isActive: $showTicketDetail) {
                     EmptyView()
                 }
             }
@@ -200,6 +187,7 @@ struct TicketDetailView: View {
     
     @ObservedObject private var nfcViewModel = NFCViewModel()
     var ticketData: [[String: Any]]
+    var eventWebUrl: String? // Add this property
     
     var body: some View {
         NavigationView {
@@ -215,7 +203,7 @@ struct TicketDetailView: View {
                 VStack(spacing: 0){
                     Spacer()
                     NavigationLink(destination:
-                                    MyWebView(urlToLoad: nfcViewModel.eventWebUrl ?? "https://xive.co.kr/fromUs")
+                                    MyWebView(urlToLoad: eventWebUrl ?? "https://xive.co.kr/fromUs") // Use the eventWebUrl here
                         .edgesIgnoringSafeArea(.all)
                     ){
                         
@@ -251,46 +239,56 @@ struct TicketDetailView: View {
             .background(Color.white) // 전체 배경을 흰색으로 설정
             .onAppear {
                 // 애니메이션 타이머 설정
-                nfcViewModel.urlDetected = { url in
-                    self.handleURL(url)
+                nfcViewModel.urlToLoad = self.eventWebUrl
+                Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { timer in
+                    withAnimation(Animation.easeInOut(duration: 1)) {
+                        // 애니메이션 효과를 추가한 상태 업데이트
+                    }
                 }
             }
         }
-        .navigationBarBackButtonHidden(true)
-        .preferredColorScheme(.light) // 라이트 모드로 고정
+        .navigationBarHidden(true) // 네비게이션 바 숨기기
     }
     
     @ViewBuilder
     private func setupNavigationBar() -> some View {
-        VStack(spacing: 0) {
-            HStack {
-                Button(action: {
-                    self.navigateToSetting = true
-                }) {
-                    Image("Setting")
-                        .padding(.leading, 25)
-                }
-                .background(
-                    NavigationLink(destination: SettingView(), isActive: $navigateToSetting) {
-                        EmptyView()
-                    }
-                        .hidden()
-                )
-                
-                Spacer()
-                
-                Image("XIVE_textLogo_small")
-                
-                Spacer()
-                
-                Text("           ")
+        HStack {
+            Button(action: {
+                self.navigateToSetting = true
+            }) {
+                Image("Setting")
             }
-            .padding()
-            Divider().background(Color.secondary) // 구분선 추가
-                .background(Color.white)
+            .background(
+                NavigationLink(destination: SettingView(), isActive: $navigateToSetting) {
+                    EmptyView()
+                }
+                    .hidden()
+            )
+            
+            Spacer()
+            
+            Image("XIVE_textLogo_small")
+                .frame(alignment: .center)
+            
+            Spacer()
+            
+            Button(action: {
+                self.navigateToCalendar = true
+            }) {
+                Image("Calendar")
+            }
+            .background(
+                NavigationLink(destination: CalendarView(), isActive: $navigateToCalendar) {
+                    EmptyView()
+                }
+                    .hidden()
+            )
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white) // 상단바 배경 색상 추가
+        .padding()
+        .background(VStack {
+            Spacer()
+            Divider().background(Color.secondary)
+        })
     }
     
     @ViewBuilder
@@ -312,17 +310,12 @@ struct TicketDetailView: View {
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: 10)
                     .padding(.bottom, 20)
                     .padding(.trailing, 15)
-            }// 애니메이션을 위한 오프셋 추가
+            }
+            .offset(y: 0)
         }
-    }
-    
-    private func handleURL(_ url: String) {
-        // URL 처리 및 서버 전송
-        nfcViewModel.sendToServer(url: url)
     }
 }
 
-// 인디케이터 컴포넌트 수정
 struct TicketViewIndicator: View {
     let currentPage: Int
     let total: Int
@@ -330,22 +323,13 @@ struct TicketViewIndicator: View {
     var body: some View {
         HStack {
             ForEach(0..<total, id: \.self) { index in
-                Capsule()
-                    .frame(width: currentPage == index ? 40 : 15, height: 10)
-                    .foregroundColor(currentPage == index ? .purple : .gray) // .XIVE_Purple 사용 불가능한 경우 기본 색상으로 변경
+                Circle()
+                    .fill(index == currentPage ? Color.XIVE_Purple : Color.gray)
+                    .frame(width: 8, height: 8)
+                    .scaleEffect(index == currentPage ? 1.5 : 1.0)
+                    .animation(.easeInOut, value: currentPage)
             }
         }
     }
 }
 
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView()
-    }
-}
-
-struct TicketDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        TicketDetailView(ticketData: [])
-    }
-}

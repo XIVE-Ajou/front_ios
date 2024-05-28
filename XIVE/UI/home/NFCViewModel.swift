@@ -12,10 +12,15 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     var nfcSession: NFCNDEFReaderSession?
     @Published var nfcContent = ""
     var urlDetected: ((String) -> Void)?  // URL 감지 콜백
+    @Published var urlToLoad: String?
 
     // 서버 응답 변수들
-
     @Published var eventWebUrl: String?
+    
+    func handleDetectedURL(url: String) {
+            urlToLoad = url
+            sendToServer(url: url)
+        }
 
     func beginScanning() {
         guard NFCNDEFReaderSession.readingAvailable else {
@@ -56,11 +61,14 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         var request = URLRequest(url: requestUrl)
         request.httpMethod = "POST"
         
-        // URL 수정 (http://를 제거)
-        let modifiedUrl = url.replacingOccurrences(of: "http://", with: "")
+        // URL 수정 (nfc= 뒤의 값만 추출)
+        guard let modifiedUrl = url.split(separator: "=").last else {
+            print("Invalid URL format")
+            return
+        }
         
         // JSON 요청 바디 생성
-        let requestBody = ["url": modifiedUrl]
+        let requestBody = ["url": String(modifiedUrl)]
         
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: [])

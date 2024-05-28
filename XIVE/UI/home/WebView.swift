@@ -28,7 +28,7 @@ struct MyWebView: View {
                 VStack(spacing: 0) {
                     setupNavigationBar()
                     ZStack {
-                        WebView(urlToLoad: urlToLoad, reloadTrigger: webViewReloadTrigger, onError: {
+                        WebView(urlToLoad: nfcViewModel.urlToLoad ?? urlToLoad, reloadTrigger: webViewReloadTrigger, onError: {
                             self.showErrorView = true
                         })
                         .edgesIgnoringSafeArea(.all)
@@ -73,7 +73,7 @@ struct MyWebView: View {
     }
 
     private func handleURL(_ url: String) {
-        nfcViewModel.sendToServer(url: url)
+        nfcViewModel.handleDetectedURL(url: url)
     }
     
     private func reloadWebView() {
