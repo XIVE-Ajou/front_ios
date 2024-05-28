@@ -13,6 +13,10 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     @Published var nfcContent = ""
     var urlDetected: ((String) -> Void)?  // URL 감지 콜백
 
+    // 서버 응답 변수들
+
+    @Published var eventWebUrl: String?
+
     func beginScanning() {
         guard NFCNDEFReaderSession.readingAvailable else {
             print("이 장치에서는 NFC를 지원하지 않습니다.")
@@ -22,6 +26,7 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         nfcSession = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: true)
         nfcSession?.alertMessage = "물건에 가까이 대고 스캔하세요."
         nfcSession?.begin()
+        print(eventWebUrl)
     }
 
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
@@ -94,7 +99,7 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     }
     
     private func sendTicketData(eventId: Int, nfcId: Int, seatNumber: String) {
-        guard let requestUrl = URL(string: "https://api.xive.co.kr/api/tickets") else { return }
+        guard let requestUrl = URL(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/tickets") else { return }
         var request = URLRequest(url: requestUrl)
         request.httpMethod = "POST"
         
@@ -132,8 +137,19 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             }
             
             guard let data = data else { return }
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("Ticket API response: \(responseString)")
+            do {
+                if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    print("Server response: \(jsonResponse)")
+                    
+                    // JSON 응답에서 필요한 데이터 추출 및 저장
+                    DispatchQueue.main.async {
+                        self.eventWebUrl = jsonResponse["eventWebUrl"] as? String
+                    }
+                } else {
+                    print("Invalid response data")
+                }
+            } catch {
+                print("JSON parsing error: \(error.localizedDescription)")
             }
         }
         task.resume()

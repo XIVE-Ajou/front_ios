@@ -124,7 +124,7 @@ struct OneToOneView: View {
     }
     
     private func sendInquiry() {
-        guard let requestUrl = URL(string: "https://api.xive.co.kr/api/inquiries") else { return }
+        guard let requestUrl = URL(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/inquiries") else { return }
         var request = URLRequest(url: requestUrl)
         request.httpMethod = "POST"
         

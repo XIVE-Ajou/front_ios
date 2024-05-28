@@ -17,40 +17,41 @@ struct HomeView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var ticketData: [[String: Any]] = []
     @ObservedObject private var nfcViewModel = NFCViewModel()
-
+    
     var body: some View {
-        Group {
-            if !ticketData.isEmpty {
-                TicketDetailView(ticketData: ticketData)
-            } else {
-                contentView
-            }
-        }
-        .navigationBarBackButtonHidden(true)
-        .preferredColorScheme(.light) // 라이트 모드로 고정
-        .onAppear {
-            // API 호출을 통해 티켓 데이터 확인
-            checkTickets()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NFCSessionEnded"))) { _ in
-            // NFC 세션 종료 시 화면 리프레시
-            refreshTicketData()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-            // 앱이 비활성 상태로 전환될 때 NFC 상태를 확인하여 리프레시합니다.
-            if !NFCReaderSession.readingAvailable {
+        //        Group {
+        //            if !ticketData.isEmpty {
+        //                TicketDetailView(ticketData: ticketData)
+        //            } else {
+        //                contentView
+        //            }
+        //        }
+        //        .navigationBarBackButtonHidden(true)
+        //        .preferredColorScheme(.light) // 라이트 모드로 고정
+        //        .onAppear {
+        //            // API 호출을 통해 티켓 데이터 확인
+        //            checkTickets()
+        //        }
+        TicketDetailView(ticketData: ticketData)
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NFCSessionEnded"))) { _ in
+                // NFC 세션 종료 시 화면 리프레시
                 refreshTicketData()
             }
-        }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
+                // 앱이 비활성 상태로 전환될 때 NFC 상태를 확인하여 리프레시합니다.
+                if !NFCReaderSession.readingAvailable {
+                    refreshTicketData()
+                }
+            }
     }
-
+    
     private var contentView: some View {
         NavigationView {
             VStack(spacing: 0) {
                 setupNavigationBar()
-
+                
                 Spacer()
-
+                
                 Image("Add_Ticket")
                     .resizable()
                     .scaledToFit()
@@ -66,7 +67,7 @@ struct HomeView: View {
                         .foregroundColor(Color.XIVE_Purple)
                         .padding(.top, 50)
                         .tracking(-0.02)
-
+                    
                     Text("Smart ticket")
                         .font(.largeTitle)
                         .fontWeight(.bold)
@@ -80,7 +81,7 @@ struct HomeView: View {
                 Spacer()
                 
                 setupNFCButton()
-
+                
                 NavigationLink(destination: TicketDetailView(ticketData: ticketData), isActive: $showTicketDetail) {
                     EmptyView()
                 }
@@ -106,7 +107,7 @@ struct HomeView: View {
                 NavigationLink(destination: SettingView(), isActive: $navigateToSetting) {
                     EmptyView()
                 }
-                .hidden()
+                    .hidden()
             )
             
             Spacer()
@@ -137,7 +138,7 @@ struct HomeView: View {
                     .scaledToFit()
                     .frame(width: 80, height: 80)
                     .clipShape(Circle())
-                    // Adding shadows in different directions
+                // Adding shadows in different directions
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: 10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: -10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: -10)
@@ -193,11 +194,10 @@ struct HomeView: View {
     }
 }
 
-
 struct TicketDetailView: View {
     @State private var navigateToCalendar = false
     @State private var navigateToSetting = false
-
+    
     @ObservedObject private var nfcViewModel = NFCViewModel()
     var ticketData: [[String: Any]]
     
@@ -215,10 +215,11 @@ struct TicketDetailView: View {
                 VStack(spacing: 0){
                     Spacer()
                     NavigationLink(destination:
-                                    MyWebView(urlToLoad: "https://xive.co.kr/frida")
+                                    MyWebView(urlToLoad: nfcViewModel.eventWebUrl ?? "https://xive.co.kr/fromUs")
                         .edgesIgnoringSafeArea(.all)
                     ){
-                        Image("real_frida") // 티켓 이미지
+                        
+                        Image("FromUs_Poster")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 400, height: 400)
@@ -227,7 +228,7 @@ struct TicketDetailView: View {
                             .padding(.top, 100)
                     }
                     .padding(20)
-
+                    
                     TicketViewIndicator(currentPage: 0, total: 1) // 인디케이터 수정
                         .padding(.bottom)
                     
@@ -237,11 +238,12 @@ struct TicketDetailView: View {
                         .padding(.trailing, 20)
                 }
                 .background(
-                    Image("real_frida")
+                    Image("FromUs_Blur")
                         .resizable()
                         .scaledToFill()
-                        .blur(radius: 5)
                         .frame(maxWidth: .infinity, maxHeight: .infinity) // 배경을 VStack 꽉 채우도록 설정
+                    
+                    
                 )
                 .ignoresSafeArea(edges: .bottom) // 하단 Safe Area 무시
                 .zIndex(0) // 배경과 콘텐츠를 상단바 아래에 위치하도록 설정
@@ -249,7 +251,6 @@ struct TicketDetailView: View {
             .background(Color.white) // 전체 배경을 흰색으로 설정
             .onAppear {
                 // 애니메이션 타이머 설정
-
                 nfcViewModel.urlDetected = { url in
                     self.handleURL(url)
                 }
@@ -286,7 +287,7 @@ struct TicketDetailView: View {
             }
             .padding()
             Divider().background(Color.secondary) // 구분선 추가
-            .background(Color.white)
+                .background(Color.white)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white) // 상단바 배경 색상 추가
@@ -304,7 +305,7 @@ struct TicketDetailView: View {
                     .scaledToFit()
                     .frame(width: 80, height: 80)
                     .clipShape(Circle())
-                    // Adding shadows in different directions
+                // Adding shadows in different directions
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: 10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: -10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: -10)

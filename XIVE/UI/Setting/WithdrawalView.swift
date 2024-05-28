@@ -176,7 +176,7 @@ struct WithdrawalView: View {
     }
     
     private func withdraw() {
-        guard let url = URL(string: "https://api.xive.co.kr/api/withdrawal") else { return }
+        guard let url = URL(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/withdrawal") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

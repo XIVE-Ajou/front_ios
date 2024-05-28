@@ -125,7 +125,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
                     self.saveLoginState(isLoggedIn: true, name: name, loginMethod: "kakao")
                 }
 
-                self.postLoginData(url: URL(string: "https://api.xive.co.kr/api/kakao-login")!, parameters: ["accessToken": token.accessToken]) { result in
+                self.postLoginData(url: URL(string: /*"https://api.xive.co.kr/api/kakao-login"*/ "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/kakao-login")!, parameters: ["accessToken": token.accessToken]) { result in
                     switch result {
                     case .success(let data):
                         let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
@@ -136,6 +136,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
                         self.isAuthorized = true
                     case .failure(let error):
                         print("Error sending Kakao login data: \(error.localizedDescription)")
+                        print(token.accessToken)
                     }
                 }
             }
@@ -172,7 +173,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
             saveLoginState(isLoggedIn: true, name: fullName, loginMethod: "apple")
             let email = appleIDCredential.email ?? ""
             
-            postLoginData(url: URL(string: "https://api.xive.co.kr/api/apple-login")!, parameters: ["code": authCode, "id_token": idToken, "name": fullName, "email": email]) { result in
+            postLoginData(url: URL(string: /*"https://api.xive.co.kr/api/apple-login"*/ "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/apple-login")!, parameters: ["code": authCode, "id_token": idToken, "name": fullName, "email": email]) { result in
                 switch result {
                 case .success(let data):
                     let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
@@ -196,7 +197,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     // Handle guest login
     func handleGuestLogin() {
         print("Guest login initiated.")
-        postLoginData(url: URL(string: "https://api.xive.co.kr/api/non-login")!, parameters: [:]) { result in
+        postLoginData(url: URL(string: /*"https://api.xive.co.kr/api/non-login"*/"https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/non-login")!, parameters: [:]) { result in
             switch result {
             case .success(let data):
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]

@@ -58,7 +58,7 @@ struct MyWebView: View {
                         .padding(.leading, 15)
                 }
                 Spacer()
-                Image("        ")
+                Text("        ")
                 Spacer()
                 Text("         ")
             }

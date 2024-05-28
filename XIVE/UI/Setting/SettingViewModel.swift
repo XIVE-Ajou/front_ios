@@ -76,7 +76,7 @@ class SettingViewModel: NSObject, ObservableObject, ASAuthorizationControllerDel
                 "tokenType": token.tokenType,
                 "scope": token.scope ?? ""
             ] as [String : Any]
-            postLoginData(url: URL(string: "https://api.xive.co.kr/api/kakao-login")!, parameters: ["authCode": oauthToken])
+            postLoginData(url: URL(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/kakao-login")!, parameters: ["authCode": oauthToken])
             print(tokenData)
         }
     }
@@ -103,7 +103,7 @@ class SettingViewModel: NSObject, ObservableObject, ASAuthorizationControllerDel
             let fullName = "\(appleIDCredential.fullName?.givenName ?? "") \(appleIDCredential.fullName?.familyName ?? "")"
             let email = appleIDCredential.email ?? ""
             
-            postLoginData(url: URL(string: "https://api.xive.co.kr/api/apple-login")!, parameters: ["code": authCode, "id_token": idToken, "name": fullName, "email": email])
+            postLoginData(url: URL(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/apple-login")!, parameters: ["code": authCode, "id_token": idToken, "name": fullName, "email": email])
             self.isAuthorized = true
             self.shouldShowOnboarding = true
             print("Apple Login Successful: code: \(authCode), id_token: \(idToken), name: \(fullName), email: \(email)")

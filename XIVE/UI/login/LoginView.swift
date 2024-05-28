@@ -28,7 +28,7 @@ struct LoginView: View {
                         .padding(.bottom, 30)
 
                     Button(action: viewModel.handleKakaoLogin) {
-                        Image("kakaotest")
+                        Image("kakao_real")
                             .resizable()
                             .scaledToFit()
                             .frame(height: 52)
@@ -38,7 +38,7 @@ struct LoginView: View {
                     .padding(.vertical, 1)
 
                     Button(action: viewModel.handleAuthorizationAppleIDButtonPress) {
-                        Image("appletest")
+                        Image("apple_real")
                             .resizable()
                             .scaledToFit()
                             .frame(height: 52)
