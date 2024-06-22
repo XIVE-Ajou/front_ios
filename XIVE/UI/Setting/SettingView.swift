@@ -459,12 +459,6 @@ struct SettingView: View {
         }
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.light) // 다크 모드에서도 흰색 배경 유지
-        .customDialog(isActive: $showLogoutDialog, shouldNavigateToLogin: $shouldNavigateToLogin, title: "로그아웃 하시겠어요?", message: "언제나 여기서 기다리고 있을게요 😢", buttonTitle: "머무르기", action: {
-            // 로그아웃 로직 추가
-        })
-        .fullScreenCover(isPresented: $shouldNavigateToLogin) {
-            LoginView()
-        }
     }
     
     @ViewBuilder

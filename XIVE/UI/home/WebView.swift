@@ -16,7 +16,15 @@ struct MyWebView: View {
     @State private var showErrorView = false
     @State private var webViewReloadTrigger = UUID()
     
-    var urlToLoad: String
+    var urlToLoad: String {
+        if let savedUrl = UserDefaults.standard.string(forKey: "eventWebUrl") {
+            let cleanedUrl = cleanURL(savedUrl)
+            let correctedUrl = correctNFCUrl(cleanedUrl)
+            return correctedUrl.hasPrefix("http://") || correctedUrl.hasPrefix("http://") ? correctedUrl : "http://\(correctedUrl)"
+        } else {
+            return "https://xive.co.kr/frida"
+        }
+    }
 
     var body: some View {
         NavigationView {
@@ -28,7 +36,7 @@ struct MyWebView: View {
                 VStack(spacing: 0) {
                     setupNavigationBar()
                     ZStack {
-                        WebView(urlToLoad: nfcViewModel.urlToLoad ?? urlToLoad, reloadTrigger: webViewReloadTrigger, onError: {
+                        WebView(urlToLoad: urlToLoad, reloadTrigger: webViewReloadTrigger, onError: {
                             self.showErrorView = true
                         })
                         .edgesIgnoringSafeArea(.all)
@@ -80,6 +88,25 @@ struct MyWebView: View {
         self.showErrorView = false
         self.webViewReloadTrigger = UUID()
     }
+
+    private func cleanURL(_ url: String) -> String {
+        let pattern = "[^a-zA-Z0-9:/?._-]"
+        let regex = try? NSRegularExpression(pattern: pattern, options: [])
+        let range = NSRange(location: 0, length: url.utf16.count)
+        let cleanedUrl = regex?.stringByReplacingMatches(in: url, options: [], range: range, withTemplate: "") ?? url
+        return cleanedUrl
+    }
+
+    private func correctNFCUrl(_ url: String) -> String {
+        if let range = url.range(of: "?nfc") {
+            let prefix = url[..<range.upperBound]
+            let suffix = url[range.upperBound...]
+            if !suffix.hasPrefix("=") {
+                return "\(prefix)=\(suffix)"
+            }
+        }
+        return url
+    }
 }
 
 struct WebView: UIViewRepresentable {
@@ -108,9 +135,11 @@ struct WebView: UIViewRepresentable {
     
     private func loadRequest(in webView: WKWebView) {
         guard let url = URL(string: self.urlToLoad) else {
+            print("Invalid URL: \(self.urlToLoad)")
             self.onError()
             return
         }
+        print("Loading URL: \(url)")
         webView.load(URLRequest(url: url))
     }
 
@@ -122,11 +151,19 @@ struct WebView: UIViewRepresentable {
             self.parent = parent
         }
 
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // Load finished successfully
+            print("WebView did finish navigation")
+            parent.onError = {}
+        }
+
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            print("WebView did fail navigation with error: \(error.localizedDescription)")
             parent.onError()
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            print("WebView did fail provisional navigation with error: \(error.localizedDescription)")
             parent.onError()
         }
     }
@@ -140,7 +177,6 @@ struct ErrorView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-
                 Image("Warning_icon")
                     .resizable()
                     .scaledToFit()
@@ -180,7 +216,6 @@ struct ErrorView: View {
                 }
                 
                 Spacer()
-                
             }
             .background(Color.white) // 배경색을 흰색으로 고정
             .navigationBarBackButtonHidden(true)
@@ -231,7 +266,7 @@ struct ErrorView: View {
 
 struct MyWebView_Previews: PreviewProvider {
     static var previews: some View {
-        MyWebView(urlToLoad: "https://xive.co.kr/frida")
+        MyWebView()
     }
 }
 

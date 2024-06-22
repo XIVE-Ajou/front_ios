@@ -214,11 +214,11 @@ struct TicketDetailView: View {
                 VStack(spacing: 0){
                     Spacer()
                     NavigationLink(destination:
-                                    MyWebView(urlToLoad: nfcViewModel.eventWebUrl ?? "https://xive.co.kr/fromUs")
+                                    MyWebView()
                         .edgesIgnoringSafeArea(.all)
                     ){
                         
-                        Image("FromUs_Poster")
+                        Image("FromUs_Ticket")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 400, height: 400)
@@ -282,7 +282,18 @@ struct TicketDetailView: View {
                 
                 Spacer()
                 
-                Text("           ")
+                Button(action: {
+                    self.navigateToCalendar = true
+                }) {
+                    Image("Calender")
+                        .padding(.trailing, 25)
+                }
+                .background(
+                    NavigationLink(destination: CalendarView(), isActive: $navigateToCalendar) {
+                        EmptyView()
+                    }
+                        .hidden()
+                )
             }
             .padding()
             Divider().background(Color.secondary) // 구분선 추가

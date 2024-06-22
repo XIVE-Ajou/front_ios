@@ -15,12 +15,31 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     @Published var urlToLoad: String?
 
     // 서버 응답 변수들
-    @Published var eventWebUrl: String?
-    
-    func handleDetectedURL(url: String) {
-            urlToLoad = url
-            sendToServer(url: url)
+    @Published var eventWebUrl: String? {
+        didSet {
+            if let eventWebUrl = eventWebUrl {
+                // 로컬에 저장
+                UserDefaults.standard.set(eventWebUrl, forKey: "eventWebUrl")
+                print("Saved eventWebUrl to UserDefaults: \(eventWebUrl)")
+            }
         }
+    }
+    
+    override init() {
+        super.init()
+        // 로컬에서 로드
+        if let savedEventWebUrl = UserDefaults.standard.string(forKey: "eventWebUrl") {
+            self.eventWebUrl = savedEventWebUrl
+            print("Loaded eventWebUrl from UserDefaults: \(savedEventWebUrl)")
+        }
+    }
+
+    func handleDetectedURL(url: String) {
+        urlToLoad = url
+        eventWebUrl = url  // NFC 태그 내용을 eventWebUrl에 저장
+        print("Detected URL: \(url)")  // URL 출력
+        sendToServer(url: url)
+    }
 
     func beginScanning() {
         guard NFCNDEFReaderSession.readingAvailable else {
@@ -29,9 +48,9 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         }
 
         nfcSession = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: true)
-        nfcSession?.alertMessage = "물건에 가까이 대고 스캔하세요."
+        nfcSession?.alertMessage = "티켓의 하단을 휴대폰 상단에 태그해주세요."
         nfcSession?.begin()
-        print(eventWebUrl)
+        print(eventWebUrl ?? "No eventWebUrl")
     }
 
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
@@ -45,11 +64,11 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
         for message in messages {
             for record in message.records {
-                if let text = String(data: record.payload.advanced(by: 3), encoding: .utf8) {
+                if let text = String(data: record.payload, encoding: .utf8) {
                     DispatchQueue.main.async {
                         self.nfcContent = text  // NFC 태그 내용 저장
                         self.urlDetected?(text)  // URL을 처리하는 콜백 호출
-                        self.sendToServer(url: text)  // 서버로 전송
+                        self.handleDetectedURL(url: text)  // URL 처리 함수 호출
                     }
                 }
             }
@@ -61,17 +80,25 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         var request = URLRequest(url: requestUrl)
         request.httpMethod = "POST"
         
-        // URL 수정 (nfc= 뒤의 값만 추출)
-        guard let modifiedUrl = url.split(separator: "=").last else {
+        // URL 수정 (base URL과 nfc 값 추출 및 결합)
+        guard let urlComponents = URLComponents(string: url),
+              let nfcQueryItem = urlComponents.queryItems?.first(where: { $0.name == "nfc" }),
+              let nfcValue = nfcQueryItem.value else {
             print("Invalid URL format")
             return
         }
         
+        // 새로운 변수를 만들어 수정된 URL 생성
+        let modifiedUrl = "\(urlComponents.host ?? "")\(urlComponents.path)\(nfcValue)"
+        
+        // 수정된 URL 로그 출력
+        print("Modified URL: \(modifiedUrl)")
+        
         // JSON 요청 바디 생성
-        let requestBody = ["url": String(modifiedUrl)]
+        let requestBody = ["url": modifiedUrl]
         
         do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: [])
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: .fragmentsAllowed)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         } catch {
             print("JSON serialization error: \(error.localizedDescription)")
@@ -122,16 +149,17 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
         request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
         
-        // 요청 바디에 eventId, nfcId, seatNumber 추가
+        // 요청 바디에 eventId, nfcId, seatNumber, eventWebUrl 추가
         let requestBody: [String: Any] = [
             "eventId": eventId,
             "nfcId": nfcId,
-            "seatNumber": seatNumber
+            "seatNumber": seatNumber,
+            "eventWebUrl": eventWebUrl ?? ""  // eventWebUrl을 추가
         ]
         print(requestBody)
         
         do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: [])
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: .fragmentsAllowed)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         } catch {
             print("JSON serialization error: \(error.localizedDescription)")
@@ -149,9 +177,14 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                 if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     print("Server response: \(jsonResponse)")
                     
-                    // JSON 응답에서 필요한 데이터 추출 및 저장
+                    // JSON 응답에서 eventWebUrl 값을 추출하여 저장
                     DispatchQueue.main.async {
-                        self.eventWebUrl = jsonResponse["eventWebUrl"] as? String
+                        if let eventWebUrl = jsonResponse["eventWebUrl"] as? String {
+                            self.eventWebUrl = eventWebUrl
+                            print("Updated eventWebUrl: \(eventWebUrl)")  // Updated eventWebUrl 출력
+                        } else {
+                            print("eventWebUrl을 찾을 수 없습니다.")
+                        }
                     }
                 } else {
                     print("Invalid response data")
