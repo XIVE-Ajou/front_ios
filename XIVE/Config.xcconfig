@@ -1,0 +1,11 @@
+//
+//  Config.xcconfig
+//  XIVE
+//
+//  Created by 나현흠 on 5/8/24.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+KAKAO_NATIVE_APP_KEY = 91d4398a3a1c3fbef81cb63a18972afd
