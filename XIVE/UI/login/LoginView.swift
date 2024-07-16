@@ -46,14 +46,6 @@ struct LoginView: View {
                     }
                     .padding(.horizontal, 35)
                     .padding(.vertical, 5)
-
-                    Button(action: viewModel.handleGuestLogin) {
-                        Text("비회원으로 둘러보기")
-                            .tracking(-0.02)
-                            .foregroundColor(.gray)
-                            .underline()
-                            .font(.system(size: 14))
-                    }
                     .padding(.bottom, 30)
 
                     Spacer()
