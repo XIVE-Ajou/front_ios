@@ -164,7 +164,6 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
         request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
         
-        // 요청 바디에 eventId, nfcId, seatNumber, eventWebUrl 추가
         let requestBody: [String: Any] = [
             "eventId": eventId,
             "nfcId": nfcId,
