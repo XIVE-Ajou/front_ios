@@ -193,24 +193,6 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
             break
         }
     }
-
-    // Handle guest login
-    func handleGuestLogin() {
-        print("Guest login initiated.")
-        postLoginData(url: URL(string: /*"https://api.xive.co.kr/api/non-login"*/"https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/non-login")!, parameters: [:]) { result in
-            switch result {
-            case .success(let data):
-                let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-                let accessToken = json?["accessToken"] as? String
-                let refreshToken = json?["refreshToken"] as? String
-                self.saveTokens(accessToken: accessToken, refreshToken: refreshToken)
-                self.isNewUser = json?["isNew"] as? Bool ?? false
-                self.isAuthorized = true
-            case .failure(let error):
-                print("Error sending guest login data: \(error.localizedDescription)")
-            }
-        }
-    }
 }
 
 extension URL {
