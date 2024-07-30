@@ -13,4 +13,5 @@ extension Color {
     static let XIVE_Purple = Color("XIVE_Purple")
     static let XIVE_White = Color("XIVE_White")
     static let XIVE_SettingDivider = Color("XIVE_SettingDivider")
+    static let XIVE_Error = Color("XIVE_Error")
 }

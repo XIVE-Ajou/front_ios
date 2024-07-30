@@ -418,7 +418,7 @@ struct SettingView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .multilineTextAlignment(.leading)
                                 .foregroundColor(.black)
-                            Text("Ver 1.0.2")
+                            Text("Ver 1.0.3")
                                 .tracking(-0.02)
                                 .padding(25)
                                 .multilineTextAlignment(.trailing)
@@ -468,6 +468,7 @@ struct SettingView: View {
                 presentationMode.wrappedValue.dismiss()
             }) {
                 Image("back_arrow")
+                    .padding(.leading, 15)
             }
             
             Spacer()

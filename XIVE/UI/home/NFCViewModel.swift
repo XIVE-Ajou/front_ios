@@ -11,34 +11,33 @@ import CoreNFC
 class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     var nfcSession: NFCNDEFReaderSession?
     @Published var nfcContent = ""
-    var urlDetected: ((String) -> Void)?  // URL 감지 콜백
+    var urlDetected: ((String) -> Void)?
     @Published var urlToLoad: String?
 
     // 서버 응답 변수들
     @Published var eventWebUrl: String? {
         didSet {
             if let eventWebUrl = eventWebUrl {
-                // 로컬에 저장
                 UserDefaults.standard.set(eventWebUrl, forKey: "eventWebUrl")
-                print("Saved eventWebUrl to UserDefaults: \(eventWebUrl)")
             }
         }
     }
-    
+    @Published var ticketId: Int?
+    private var isRequestInProgress = false
+
     override init() {
         super.init()
-        // 로컬에서 로드
         if let savedEventWebUrl = UserDefaults.standard.string(forKey: "eventWebUrl") {
             self.eventWebUrl = savedEventWebUrl
-            print("Loaded eventWebUrl from UserDefaults: \(savedEventWebUrl)")
         }
     }
 
     func handleDetectedURL(url: String) {
         urlToLoad = url
-        eventWebUrl = cleanURL(url: url)  // NFC 태그 내용을 정리하여 eventWebUrl에 저장
-        print("Detected URL: \(url)")  // URL 출력
-        sendToServer(url: url)
+        let formattedToken = formatToken(url: url)
+        print("Detected URL: \(url)")
+        print("Formatted Token: \(formattedToken)")
+        getEventDetails(eventToken: formattedToken)
     }
 
     func beginScanning() {
@@ -56,7 +55,6 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
         print("NFC 세션 비활성화: \(error.localizedDescription)")
         DispatchQueue.main.async {
-            // 화면 리프레시 로직 추가
             NotificationCenter.default.post(name: NSNotification.Name("NFCSessionEnded"), object: nil)
         }
     }
@@ -66,138 +64,216 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             for record in message.records {
                 if let text = String(data: record.payload, encoding: .utf8) {
                     DispatchQueue.main.async {
-                        self.nfcContent = text  // NFC 태그 내용 저장
-                        self.urlDetected?(text)  // URL을 처리하는 콜백 호출
-                        self.handleDetectedURL(url: text)  // URL 처리 함수 호출
+                        self.nfcContent = self.extractContent(from: text)
+                        self.urlDetected?(self.nfcContent)
+                        self.handleDetectedURL(url: self.nfcContent)
                     }
                 }
             }
         }
     }
-    
-    // URL에서 앞에 있는 문자나 숫자를 제거하는 함수
-    func cleanURL(url: String) -> String {
-        let pattern = "^[^a-zA-Z0-9]*"
-        let cleanedUrl = url.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
-        return cleanedUrl
+
+    func extractContent(from text: String) -> String {
+        return String(text.dropFirst(3))
     }
 
-    public func sendToServer(url: String) {
-        guard let requestUrl = URL(string: "http://18.219.56.184:8080/decrypt") else { return }
-        var request = URLRequest(url: requestUrl)
-        request.httpMethod = "POST"
-        
-        // URL 수정 (base URL과 nfc 값 추출 및 결합)
-        guard let urlComponents = URLComponents(string: url),
-              let nfcQueryItem = urlComponents.queryItems?.first(where: { $0.name == "nfc" }),
-              let nfcValue = nfcQueryItem.value else {
-            print("Invalid URL format")
-            return
+    func formatToken(url: String) -> String {
+        let pattern = "^(stamp|event):[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+        if let range = url.range(of: pattern, options: .regularExpression) {
+            return String(url[range])
         }
-        
-        // 새로운 변수를 만들어 수정된 URL 생성
-        var modifiedUrl = "\(urlComponents.host ?? "")\(urlComponents.path)\(nfcValue)"
-        
-        // 수정된 URL 로그 출력
-        print("Modified URL before cleaning: \(modifiedUrl)")
-        
-        // modifiedUrl을 정리하여 eventWebUrl에 저장
-        modifiedUrl = cleanURL(url: modifiedUrl)
-        DispatchQueue.main.async {
-            self.eventWebUrl = modifiedUrl
-        }
-        
-        print("Modified URL after cleaning: \(modifiedUrl)")
-
-        // JSON 요청 바디 생성
-        let requestBody = ["url": modifiedUrl]
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: .fragmentsAllowed)
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        } catch {
-            print("JSON serialization error: \(error.localizedDescription)")
-            return
-        }
-        
-        // 서버에 요청 전송
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("Network error: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let data = data else { return }
-            do {
-                if let serverResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    print("Server response: \(serverResponse)")
-                    if let eventIdStr = serverResponse["eventId"] as? String,
-                       let nfcIdStr = serverResponse["nfcId"] as? String,
-                       let seatNumber = serverResponse["seatNumber"] as? String,
-                       let eventId = Int(eventIdStr),
-                       let nfcId = Int(nfcIdStr) {
-                        self.sendTicketData(eventId: eventId, nfcId: nfcId, seatNumber: seatNumber)
-                    } else {
-                        print("Invalid response data or failed to convert strings to integers")
-                    }
-                }
-            } catch {
-                print("JSON parsing error: \(error.localizedDescription)")
-            }
-        }
-        task.resume()
+        return url
     }
-    
-    private func sendTicketData(eventId: Int, nfcId: Int, seatNumber: String) {
-        guard let requestUrl = URL(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/tickets") else { return }
+
+    func getEventDetails(eventToken: String) {
+        guard var urlComponents = URLComponents(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/event/tagging") else { return }
+        urlComponents.queryItems = [URLQueryItem(name: "eventToken", value: eventToken)]
+        guard let requestUrl = urlComponents.url else { return }
+
         var request = URLRequest(url: requestUrl)
-        request.httpMethod = "POST"
-        
+        request.httpMethod = "GET"
+
         // UserDefaults에서 AccessToken과 RefreshToken 읽기
         guard let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken"),
               let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") else {
             print("AccessToken 또는 RefreshToken을 찾을 수 없습니다.")
             return
         }
-        
+
+        // 헤더에 AccessToken과 RefreshToken 추가
+        request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
+        request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error fetching event details: \(error.localizedDescription)")
+                return
+            }
+            guard let data = data else {
+                print("No data received")
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    print("Server response: \(json)")
+                    if let eventId = json["eventId"] as? Int,
+                       let eventWebUrl = json["eventWebUrl"] as? String {
+                        DispatchQueue.main.async {
+                            self.eventWebUrl = eventWebUrl
+                            print("Fetched eventId: \(eventId), eventWebUrl: \(eventWebUrl)")
+                            self.sendTicketData(eventId: eventId)
+                        }
+                    } else {
+                        print("Invalid response data")
+                    }
+                } else {
+                    print("Invalid response data format")
+                }
+            } catch {
+                print("Failed to parse JSON: \(error.localizedDescription)")
+            }
+        }.resume()
+    }
+
+    func handleStampTagging(eventToken: String, completion: @escaping (Int?) -> Void) {
+        let trimmedToken = eventToken.trimmingCharacters(in: .whitespaces)
+        print("Trimmed Token: \(trimmedToken)")
+
+        // Form the URL with query parameters
+        guard var urlComponents = URLComponents(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/stamps/tagging") else {
+            print("Invalid URL")
+            completion(nil)
+            return
+        }
+
+        urlComponents.queryItems = [URLQueryItem(name: "stampToken", value: trimmedToken)]
+        guard let requestUrl = urlComponents.url else {
+            print("Invalid URL")
+            completion(nil)
+            return
+        }
+
+        print("Request URL: \(requestUrl)")
+
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "GET"
+
+        // UserDefaults에서 AccessToken과 RefreshToken 읽기
+        guard let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken"),
+              let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") else {
+            print("AccessToken 또는 RefreshToken을 찾을 수 없습니다.")
+            completion(nil)
+            return
+        }
+
+        // 인증 헤더 추가
+        request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
+        request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error fetching stamp details: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            guard let data = data else {
+                print("No data received")
+                completion(nil)
+                return
+            }
+
+            do {
+                if let responseDataString = String(data: data, encoding: .utf8) {
+                    print("Full Response Data: \(responseDataString)")
+                }
+
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    if let stampId = json["stampId"] as? Int {
+                        completion(stampId)
+                    } else {
+                        print("Invalid response data")
+                        completion(nil)
+                    }
+                } else {
+                    print("Invalid response data format")
+                    completion(nil)
+                }
+            } catch {
+                print("Failed to parse JSON: \(error.localizedDescription)")
+                completion(nil)
+            }
+        }.resume()
+    }
+
+    public func sendTicketData(eventId: Int) {
+        guard !isRequestInProgress else {
+            print("Request already in progress, skipping...")
+            return
+        }
+
+        isRequestInProgress = true
+
+        guard let requestUrl = URL(string: "https://1626edc1e3c68daf037d9f7108dbe7ebd4464974.xiveapple.store/api/exhibition-tickets") else { return }
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "POST"
+
+        // UserDefaults에서 AccessToken과 RefreshToken 읽기
+        guard let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken"),
+              let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") else {
+            print("AccessToken 또는 RefreshToken을 찾을 수 없습니다.")
+            isRequestInProgress = false
+            return
+        }
+
         // HTTP 헤더에 AccessToken과 RefreshToken 추가
         request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
         request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
-        
+
         let requestBody: [String: Any] = [
-            "eventId": eventId,
-            "nfcId": nfcId,
-            "seatNumber": seatNumber,
-            "eventWebUrl": eventWebUrl ?? ""  // eventWebUrl을 추가
+            "eventId": eventId
         ]
-        print(requestBody)
-        
+
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: .fragmentsAllowed)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         } catch {
             print("JSON serialization error: \(error.localizedDescription)")
+            isRequestInProgress = false
             return
         }
-        
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            defer { self.isRequestInProgress = false }
+
             if let error = error {
                 print("Network error: \(error.localizedDescription)")
                 return
             }
-            
+
             guard let data = data else { return }
             do {
+                if let responseDataString = String(data: data, encoding: .utf8) {
+                    print("Full Response Data: \(responseDataString)")
+                }
+
                 if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     print("Server response: \(jsonResponse)")
-                    
-                    // JSON 응답에서 eventWebUrl 값을 추출하여 저장
+
+                    // JSON 응답에서 eventWebUrl 및 ticketId 값을 추출하여 저장
                     DispatchQueue.main.async {
                         if let eventWebUrl = jsonResponse["eventWebUrl"] as? String {
                             self.eventWebUrl = eventWebUrl
-                            print("Updated eventWebUrl: \(eventWebUrl)")  // Updated eventWebUrl 출력
+                            print("Updated eventWebUrl: \(eventWebUrl)")
                         } else {
                             print("eventWebUrl을 찾을 수 없습니다.")
+                        }
+
+                        if let ticketId = jsonResponse["ticketId"] as? Int {
+                            self.ticketId = ticketId
+                            print("Received ticketId: \(ticketId)")
+                        } else {
+                            print("ticketId를 찾을 수 없습니다.")
                         }
                     }
                 } else {
@@ -206,7 +282,6 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
             } catch {
                 print("JSON parsing error: \(error.localizedDescription)")
             }
-        }
-        task.resume()
+        }.resume()
     }
 }

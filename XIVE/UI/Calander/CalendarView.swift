@@ -45,9 +45,10 @@ extension View {
         range.forEach { date in
             let shortSymbol = formatter.string(from: date)
             let matchingEvents = ticketData.filter { ticket in
-                guard let startDate = ticket["startDate"] as? String else { return false }
+                guard let startDate = ticket["startDate"] as? String,
+                      let isPurchase = ticket["isPurchase"] as? Bool, isPurchase else { return false }
                 let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
+                formatter.dateFormat = "yyyy년 MM월 dd일"
                 let ticketDate = formatter.date(from: startDate)
                 return calendar.isDate(ticketDate ?? date, inSameDayAs: date)
             }
@@ -79,6 +80,14 @@ extension View {
             }
         }
         
+        // Ensure there are exactly 6 weeks (42 days)
+        while days.count < 42 {
+            let lastDate = days.last?.date ?? Date()
+            guard let newDate = calendar.date(byAdding: .day, value: 1, to: lastDate) else { break }
+            let shortSymbol = formatter.string(from: newDate)
+            days.append(.init(shortSymbol: shortSymbol, date: newDate, ignored: true))
+        }
+        
         return days
     }
 }
@@ -99,29 +108,20 @@ struct CalendarViewView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
-                    CalendarView()
-                        .fixedSize(horizontal: false, vertical: true) // CalendarView 고정
-                    Divider()
-                        .background(Color("XIVE_SettingDivider"))
-                        .frame(height: 7)
+                    VStack(spacing: 0) {
+                        CalendarView()
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
                 }
-                VStack(spacing: 0) {
-                    if showTicketDetail {
-                        CardView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .edgesIgnoringSafeArea(.all)
-                    }
-                    ScrollView(.vertical) {
-                        VStack(spacing: 15) {
-                            Spacer() // Fill the space in the ScrollView
-                        }
-                        .padding(.top, 10)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity) // Ensure ScrollView fills the space
-                    }
-                    .scrollIndicators(.hidden)
-                    .edgesIgnoringSafeArea(.bottom)
+                
+                if showTicketDetail {
+                    CardView()
+                        .transition(.move(edge: .bottom))
+                        .animation(.easeInOut, value: showTicketDetail)
+                        .edgesIgnoringSafeArea(.bottom) // Ensures the view covers the home bar area
                 }
             }
             .navigationBarTitle("캘린더", displayMode: .inline)
@@ -136,9 +136,9 @@ struct CalendarViewView: View {
         .navigationBarBackButtonHidden(true)
         .alert(isPresented: $isShowDeleteAlert) {
             Alert(
-                title: Text("삭제 확인"),
-                message: Text("이 항목을 삭제하시겠습니까?"),
-                primaryButton: .destructive(Text("삭제")) {
+                title: Text("관람 기록 삭제").fontWeight(.bold),
+                message: Text("삭제한 기록은 복구할 수 없습니다."),
+                primaryButton: .destructive(Text("삭제하기")) {
                     if let card = cardToDelete {
                         deleteCard(card)
                     }
@@ -156,6 +156,7 @@ struct CalendarViewView: View {
         }) {
             HStack {
                 Image("back_arrow")
+                    .padding(.leading, 15)
                 Text(" ")
             }
         }
@@ -166,14 +167,12 @@ struct CalendarViewView: View {
         var request = URLRequest(url: requestUrl)
         request.httpMethod = "GET"
         
-        // UserDefaults에서 AccessToken과 RefreshToken 읽기
         guard let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken"),
               let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") else {
             print("AccessToken 또는 RefreshToken을 찾을 수 없습니다.")
             return
         }
         
-        // 헤더에 AccessToken과 RefreshToken 추가
         request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
         request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
         
@@ -188,14 +187,14 @@ struct CalendarViewView: View {
             }
             
             do {
-                // 서버 응답을 JSON 형식으로 변환
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                    let ticketData = json["data"] as? [[String: Any]], !ticketData.isEmpty {
-                    print("Fetched ticket data: \(ticketData)") // 로그로 출력
+                    print("Fetched ticket data: \(ticketData)")
                     DispatchQueue.main.async {
                         self.ticketData = ticketData
                         self.contentCards = ticketData.compactMap { ticket in
-                            guard let ticketId = ticket["ticketId"] as? Int,
+                            guard let isPurchase = ticket["isPurchase"] as? Bool, isPurchase,
+                                  let ticketId = ticket["ticketId"] as? Int,
                                   let eventName = ticket["eventName"] as? String,
                                   let eventType = ticket["eventType"] as? String,
                                   let eventPlace = ticket["eventPlace"] as? String,
@@ -235,14 +234,12 @@ struct CalendarViewView: View {
         var request = URLRequest(url: requestUrl)
         request.httpMethod = "DELETE"
         
-        // UserDefaults에서 AccessToken과 RefreshToken 읽기
         guard let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken"),
               let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") else {
             print("AccessToken 또는 RefreshToken을 찾을 수 없습니다.")
             return
         }
         
-        // 헤더에 AccessToken과 RefreshToken 추가
         request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
         request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
         
@@ -267,7 +264,8 @@ struct CalendarViewView: View {
         }
         let calendar = Calendar.current
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.dateFormat = "yyyy년 MM월 dd일"
+        
         self.filteredContentCards = contentCards.filter { card in
             guard let startDate = ticketData.first(where: { $0["ticketId"] as? Int == card.id })?["startDate"] as? String,
                   let ticketDate = formatter.date(from: startDate) else { return false }
@@ -278,17 +276,17 @@ struct CalendarViewView: View {
     
     @ViewBuilder
     func CardView() -> some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 0) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color.gray.opacity(0.3))
                 .frame(width: 40, height: 4)
-                .padding(.top, 3)
+                .padding(.top, 8)
             
             if let selectedDate = selectedDate {
                 Text("\(selectedDate, formatter: dateFormatter)")
                     .font(.headline)
-                    .padding(.top, 8)
-                    .padding(.bottom, 12)
+                    .padding(.top, 18)
+                    .padding(.bottom, 20)
                 
                 Divider()
             }
@@ -296,46 +294,65 @@ struct CalendarViewView: View {
             List {
                 ForEach(filteredContentCards) { card in
                     contentCardView(card: card)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button {
-                                cardToDelete = card
-                                isShowDeleteAlert.toggle()
+                                deleteCard(card)
                             } label: {
-                                Label("삭제", systemImage: "trash.circle")
+                                Image("Calendar_delete")
                             }
-                            .tint(.red)
+                            .tint(.XIVE_Error)
                         }
                 }
             }
             .listStyle(PlainListStyle())
             .frame(height: 250) // Adjust the height as needed
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
         .background(Color.white)
         .cornerRadius(15)
         .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-        .edgesIgnoringSafeArea(.all)
+        .edgesIgnoringSafeArea(.bottom)
+    }
+
+    private func eventTypeInKorean(_ type: String) -> String {
+        switch type {
+        case "EXHIBITION":
+            return "전시"
+        case "CONCERT":
+            return "공연"
+        case "MUSICAL":
+            return "뮤지컬"
+        default:
+            return type
+        }
     }
     
     @ViewBuilder
     func contentCardView(card: ContentCard) -> some View {
-        HStack() {
+        HStack {
             KFImage(URL(string: card.imageName))
                 .resizable()
                 .frame(width: 60, height: 80)
                 .padding(.leading, 0)
             
-            VStack(alignment: .leading, spacing: 6, content: {
-                Text(card.title)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(eventTypeInKorean(card.title))
                     .font(.system(size: 12))
-                    .foregroundColor(.purple)
+                    .foregroundColor(.XIVE_Purple)
+                    .tracking(-0.02)
+                    .padding(.bottom, 3)
                 Text(card.subtitle)
                     .bold()
+                    .tracking(-0.02)
+                    .padding(.bottom, 10)
                 Text(card.location)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
+                    .tracking(-0.02)
+                    .padding(.bottom, 3)
                 Text(card.dateRange)
-                    .font(.system(size: 14))
-            })
+                    .font(.system(size: 13))
+                    .tracking(-0.02)
+            }
             .padding(.leading, 7)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -351,13 +368,16 @@ struct CalendarViewView: View {
             HStack {
                 Text("\(year)년")
                     .font(.system(size: 25, weight: .bold))
+                    .tracking(-0.02)
+                    .padding(.leading, 15)
                 
                 Text(currentMonth)
                     .font(.system(size: 25, weight: .bold))
+                    .tracking(-0.02)
                 
                 Spacer()
                 
-                HStack(spacing: 15) {
+                HStack(spacing: 0) {
                     Button(action: {
                         if canDecrementMonth() {
                             monthUpdate(false)
@@ -365,18 +385,23 @@ struct CalendarViewView: View {
                             checkTickets(for: selectedMonth)
                         }
                     }) {
-                        Image(systemName: "chevron.left")
-                            .padding(.vertical, 8)
+                        Image(canDecrementMonth() ? "back_arrow" : "Canceled_LeftArrow")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 13, height: 13)
                             .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 3)
                                     .fill(Color.white)
                                     .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                             )
                     }
-                    .frame(width: 28, height: 36)
+                    .frame(width: 33, height: 29)
                     .contentShape(Rectangle())
-                    
+                    .disabled(!canDecrementMonth())
+                    .padding(.trailing, 7)
+
                     Button(action: {
                         if canIncrementMonth() {
                             monthUpdate(true)
@@ -384,37 +409,44 @@ struct CalendarViewView: View {
                             checkTickets(for: selectedMonth)
                         }
                     }) {
-                        Image(systemName: "chevron.right")
-                            .padding(.vertical, 8)
+                        Image(canIncrementMonth() ? "right_arrow" : "Canceled_RightArrow")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 13, height: 13)
                             .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 3)
                                     .fill(Color.white)
                                     .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                             )
                     }
-                    .frame(width: 28, height: 36)
+                    .frame(width: 33, height: 29)
                     .contentShape(Rectangle())
+                    .disabled(!canIncrementMonth())
+                    .padding(.trailing, 7)
                 }
                 .font(.title3)
                 .foregroundColor(.black)
+
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: calendarTitleViewHeight)
             
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    ForEach(["일", "월", "화", "수", "목", "금", "토"], id: \.self) { symbol in
+                    ForEach(["월", "화", "수", "목", "금", "토", "일"], id: \.self) { symbol in
                         Text(symbol)
                             .font(.caption)
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .foregroundColor(dayColor(for: symbol))
+                            .tracking(-0.02)
                     }
                 }
                 .frame(height: weekLabelHeight, alignment: .bottom)
                 
-                LazyVGrid(columns: Array(repeating: GridItem(spacing: 0), count: 7), spacing: 0) {
+                LazyVGrid(columns: Array(repeating: GridItem(.fixed(52), spacing: 0), count: 7), spacing: 0) {
                     ForEach(monthDates) { day in
                         VStack {
                             ZStack(alignment: .bottomTrailing) {
@@ -422,37 +454,37 @@ struct CalendarViewView: View {
                                     KFImage(URL(string: imageName))
                                         .resizable()
                                         .scaledToFit()
-                                        .frame(width: 42, height: 58)
+                                        .frame(width: 52, height: 78)
                                         .overlay(
                                             Rectangle()
-                                                .stroke(Color.purple, lineWidth: 2)
-                                                .frame(width: 42, height: 58)
+                                                .stroke(Color.XIVE_Purple, lineWidth: 2)
+                                                .frame(width: 52, height: 78)
                                                 .opacity(Calendar.current.isDate(day.date, inSameDayAs: selectedDate ?? Date.distantPast) ? 1 : 0)
                                         )
                                     if day.events.count > 1 {
                                         ZStack {
-                                            Color.purple
+                                            Color.XIVE_Purple
                                                 .frame(width: 20, height: 20)
                                             Text("\(day.events.count)")
                                                 .font(.caption2)
                                                 .foregroundColor(.white)
+                                                .tracking(-0.02)
                                         }
                                         .offset(x: -2, y: -2)
                                     }
                                 } else {
                                     Text(day.shortSymbol)
                                         .foregroundColor(Calendar.current.isDate(day.date, inSameDayAs: selectedDate ?? Date.distantPast) ? .white : day.ignored ? .gray : .black)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 20)
-                                        .padding()
+                                        .frame(width: 52, height: 78)
+                                        .tracking(-0.02)
                                         .background(
                                             Calendar.current.isDate(day.date, inSameDayAs: selectedDate ?? Date.distantPast) ?
-                                            Circle().fill(Color.purple).frame(width: 40, height: 40) : nil
+                                            Circle().fill(Color.XIVE_Purple).frame(width: 40, height: 40) : nil
                                         )
                                 }
                             }
                         }
-                        .frame(height: 60)
+                        .frame(width: 52, height: 78)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedDate = day.date
@@ -472,10 +504,10 @@ struct CalendarViewView: View {
     }
     
     func dayColor(for day: String) -> Color {
-        let weekdays = ["일", "월", "화", "수", "목", "금", "토"]
+        let weekdays = ["월", "화", "수", "목", "금", "토", "일"]
         let dayIndex = weekdays.firstIndex(of: day) ?? 0
         let selectedDayIndex = Calendar.current.component(.weekday, from: selectedDate ?? Date.distantPast) - 1
-        return dayIndex == selectedDayIndex ? .purple : .secondary
+        return dayIndex == selectedDayIndex ? .XIVE_Purple : .secondary
     }
     
     func format(_ format: String) -> String {
@@ -531,7 +563,7 @@ struct CalendarViewView: View {
     }
     
     var calendarGridHeight: CGFloat {
-        return CGFloat(monthDates.count / 7) * 60
+        return 6 * 78
     }
     
     var horizontalPadding: CGFloat {
@@ -547,7 +579,7 @@ struct CalendarViewView: View {
     }
 }
 
-struct ContentCard: Identifiable {
+struct ContentCard: Identifiable, Equatable {
     var id: Int
     var title: String
     var subtitle: String

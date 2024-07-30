@@ -18,7 +18,7 @@ struct HomeView: View {
     @State private var nfcButtonOffset: CGFloat = 0.0
     @Environment(\.colorScheme) var colorScheme
     @State private var tickets: [Ticket] = []
-    @ObservedObject private var nfcViewModel = NFCViewModel()
+    @StateObject private var nfcViewModel = NFCViewModel()
     
     var body: some View {
         Group {
@@ -29,23 +29,19 @@ struct HomeView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
-        .preferredColorScheme(.light) // 라이트 모드로 고정
+        .preferredColorScheme(.light)
         .onAppear {
-            // API 호출을 통해 티켓 데이터 확인
             checkTickets()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NFCSessionEnded"))) { _ in
-            // NFC 세션 종료 시 화면 리프레시
             refreshTicketData()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-            // 앱이 비활성 상태로 전환될 때 NFC 상태를 확인하여 리프레시합니다.
             if !NFCReaderSession.readingAvailable {
                 refreshTicketData()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            // HomeView가 활성화될 때마다 티켓 데이터를 확인합니다.
             checkTickets()
         }
     }
@@ -64,7 +60,6 @@ struct HomeView: View {
                         .frame(width: 200, height: 200)
                         .shadow(color: .gray, radius: 20, x: 0, y: 10)
                         .padding(.top, 50)
-                        .tracking(-0.02)
                     
                     VStack {
                         Text("Add +")
@@ -72,18 +67,15 @@ struct HomeView: View {
                             .fontWeight(.bold)
                             .foregroundColor(Color.XIVE_Purple)
                             .padding(.top, 50)
-                            .tracking(-0.02)
                         
                         Text("Smart ticket")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                            .tracking(-0.02)
                     }
                     
                     Text("스마트 티켓을 등록해주세요")
                         .font(.subheadline)
                         .padding(.top, 15)
-                        .tracking(-0.02)
                     Spacer()
                     
                     setupNFCButton()
@@ -92,7 +84,7 @@ struct HomeView: View {
                         EmptyView()
                     }
                 }
-                .background(Color.white) // 배경색을 흰색으로 고정
+                .background(Color.white)
                 .navigationBarBackButtonHidden(true)
             }
             .navigationBarBackButtonHidden(true)
@@ -100,7 +92,6 @@ struct HomeView: View {
     }
     
     private func refreshTicketData() {
-        // Refresh ticket data by calling API again
         checkTickets()
     }
     
@@ -111,7 +102,7 @@ struct HomeView: View {
                 self.navigateToSetting = true
             }) {
                 Image("Setting")
-                    .padding(.leading, 25)
+                    .padding(.leading, 12)
             }
             .background(
                 NavigationLink(destination: SettingView(), isActive: $navigateToSetting) {
@@ -123,7 +114,6 @@ struct HomeView: View {
             Spacer()
             
             Image("XIVE_textLogo_small")
-                .frame(alignment: .center)
             
             Spacer()
             
@@ -131,7 +121,7 @@ struct HomeView: View {
                 self.navigateToCalendar = true
             }) {
                 Image("Calender")
-                    .padding(.trailing, 25)
+                    .padding(.trailing, 12)
             }
             .background(
                 NavigationLink(destination: CalendarViewView(safeArea: safeArea).ignoresSafeArea(.container, edges: .top), isActive: $navigateToCalendar) {
@@ -159,7 +149,6 @@ struct HomeView: View {
                     .scaledToFit()
                     .frame(width: 80, height: 80)
                     .clipShape(Circle())
-                    // Adding shadows in different directions
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: 10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: -10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: -10)
@@ -167,7 +156,7 @@ struct HomeView: View {
                     .padding(.bottom, 20)
                     .padding(.trailing, 15)
             }
-            .offset(y: nfcButtonOffset) // 애니메이션을 위한 오프셋 추가
+            .offset(y: nfcButtonOffset)
         }
     }
     
@@ -176,14 +165,12 @@ struct HomeView: View {
         var request = URLRequest(url: requestUrl)
         request.httpMethod = "GET"
         
-        // UserDefaults에서 AccessToken과 RefreshToken 읽기
         guard let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken"),
               let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") else {
             print("AccessToken 또는 RefreshToken을 찾을 수 없습니다.")
             return
         }
         
-        // 헤더에 AccessToken과 RefreshToken 추가
         request.setValue(accessToken, forHTTPHeaderField: "AccessToken")
         request.setValue(refreshToken, forHTTPHeaderField: "RefreshToken")
         
@@ -198,16 +185,17 @@ struct HomeView: View {
             }
             
             do {
-                // 서버 응답을 JSON 형식으로 변환
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                    let ticketData = json["data"] as? [[String: Any]], !ticketData.isEmpty {
                     DispatchQueue.main.async {
                         self.tickets = ticketData.compactMap { data in
                             guard let eventWebUrl = data["eventWebUrl"] as? String,
-                                  let eventImageUrl = data["eventImageUrl"] as? String else {
+                                  let eventImageUrl = data["eventImageUrl"] as? String,
+                                  let eventId = data["eventId"] as? Int,
+                                  let ticketId = data["ticketId"] as? Int else {
                                 return nil
                             }
-                            return Ticket(eventWebUrl: eventWebUrl, eventImageUrl: eventImageUrl)
+                            return Ticket(eventWebUrl: eventWebUrl, eventImageUrl: eventImageUrl, eventId: eventId, ticketId: ticketId)
                         }
                         self.showTicketDetail = true
                     }
@@ -225,8 +213,10 @@ struct TicketDetailView: View {
     @State private var navigateToCalendar = false
     @State private var navigateToSetting = false
     @State private var selectedIndex = 0
+    @State private var timer: Timer? = nil
+    @State private var autoScrollEnabled = false  // 자동 스크롤 활성화 상태
     
-    @ObservedObject private var nfcViewModel = NFCViewModel()
+    @StateObject private var nfcViewModel = NFCViewModel()
     var tickets: [Ticket]
     
     var body: some View {
@@ -235,59 +225,79 @@ struct TicketDetailView: View {
                 ZStack {
                     VStack(spacing: 0) {
                         setupNavigationBar(safeArea: geometry.safeAreaInsets)
-                            .background(Color.white) // 상단바 배경 색상 추가
+                            .background(Color.white)
                             .frame(height: 56)
                         Spacer()
                     }
-                    .zIndex(1) // 상단바를 최상단에 위치하도록 설정
+                    .zIndex(1)
                     
                     VStack(spacing: 0) {
                         Spacer()
                         TabView(selection: $selectedIndex) {
                             ForEach(tickets.indices, id: \.self) { index in
-                                NavigationLink(destination: MyWebView(urlToLoad: tickets[index].eventWebUrl)) {
+                                NavigationLink(destination: MyWebView(urlToLoad: tickets[index].eventWebUrl, eventID: "\(tickets[index].eventId)", ticketID: "\(tickets[index].ticketId)")) {
                                     KFImage(URL(string: tickets[index].eventImageUrl))
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 400, height: 400)
-                                        .cornerRadius(20) // 모서리 둥글게 처리
-                                        .shadow(color: .gray, radius: 20, x: 0, y: 10)
-                                        .padding(.top, 100)
+                                        .cornerRadius(20)
+                                        .shadow(color: .gray, radius: 20, x: 0, y: 2)
+                                        .padding(.top, 150)
                                 }
-                                .padding(20)
                                 .tag(index)
                             }
                         }
-                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // 내장 인디케이터 숨기기
-                        
-                        TicketViewIndicator(currentPage: selectedIndex, total: tickets.count) // 인디케이터 수정
-                            .padding(.bottom)
-                        
+                        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                        .onAppear {
+                            if autoScrollEnabled {
+                                startTimer()
+                            }
+                        }
+                        .onDisappear {
+                            stopTimer()
+                        }
+
+                        TicketViewIndicator(currentPage: selectedIndex, total: tickets.count)
+                            .padding(.bottom, 50)
+
                         Spacer()
                         
-                        setupNFCButton() // 하단 NFC 버튼 설정
-                            .padding(.trailing, 20)
+                        setupNFCButton()
+                            .padding(.trailing, 0)
                     }
+
                     .background(
-                        Image("FromUs_Blur")
+                        Image("Sogroup_Blur")
                             .resizable()
                             .scaledToFill()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity) // 배경을 VStack 꽉 채우도록 설정
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     )
-                    .ignoresSafeArea(edges: .bottom) // 하단 Safe Area 무시
-                    .zIndex(0) // 배경과 콘텐츠를 상단바 아래에 위치하도록 설정
+                    .ignoresSafeArea(edges: .bottom)
+                    .zIndex(0)
                 }
-                .background(Color.white) // 전체 배경을 흰색으로 설정
+                .background(Color.white)
                 .onAppear {
-                    // 애니메이션 타이머 설정
                     nfcViewModel.urlDetected = { url in
                         self.handleURL(url)
                     }
                 }
             }
             .navigationBarBackButtonHidden(true)
-            .preferredColorScheme(.light) // 라이트 모드로 고정
+            .preferredColorScheme(.light)
         }
+    }
+    
+    private func startTimer() {
+        timer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { _ in
+            withAnimation {
+                selectedIndex = (selectedIndex + 1) % tickets.count
+            }
+        }
+    }
+    
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
     }
     
     @ViewBuilder
@@ -298,7 +308,7 @@ struct TicketDetailView: View {
                     self.navigateToSetting = true
                 }) {
                     Image("Setting")
-                        .padding(.leading, 25)
+                        .padding(.leading, 12)
                 }
                 .background(
                     NavigationLink(destination: SettingView(), isActive: $navigateToSetting) {
@@ -317,7 +327,7 @@ struct TicketDetailView: View {
                     self.navigateToCalendar = true
                 }) {
                     Image("Calender")
-                        .padding(.trailing, 25)
+                        .padding(.trailing, 12)
                 }
                 .background(
                     NavigationLink(destination: CalendarViewView(safeArea: safeArea).ignoresSafeArea(.container, edges: .top), isActive: $navigateToCalendar) {
@@ -327,11 +337,11 @@ struct TicketDetailView: View {
                 )
             }
             .padding()
-            Divider().background(Color.secondary) // 구분선 추가
+            Divider().background(Color.secondary)
                 .background(Color.white)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white) // 상단바 배경 색상 추가
+        .background(Color.white)
         .navigationBarBackButtonHidden(true)
     }
     
@@ -347,7 +357,6 @@ struct TicketDetailView: View {
                     .scaledToFit()
                     .frame(width: 80, height: 80)
                     .clipShape(Circle())
-                    // Adding shadows in different directions
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: 10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: -10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: -10)
@@ -360,12 +369,10 @@ struct TicketDetailView: View {
     }
     
     private func handleURL(_ url: String) {
-        // URL 처리 및 서버 전송
-        nfcViewModel.sendToServer(url: url)
+        nfcViewModel.handleDetectedURL(url: url)
     }
 }
 
-// 인디케이터 컴포넌트 수정
 struct TicketViewIndicator: View {
     let currentPage: Int
     let total: Int
@@ -374,8 +381,8 @@ struct TicketViewIndicator: View {
         HStack {
             ForEach(0..<total, id: \.self) { index in
                 Capsule()
-                    .frame(width: currentPage == index ? 40 : 15, height: 10)
-                    .foregroundColor(currentPage == index ? .purple : .gray) // .XIVE_Purple 사용 불가능한 경우 기본 색상으로 변경
+                    .frame(width: currentPage == index ? 10 : 10, height: 10)
+                    .foregroundColor(currentPage == index ? .XIVE_Purple : .gray)
             }
         }
     }
@@ -385,6 +392,8 @@ struct Ticket: Identifiable {
     let id = UUID()
     let eventWebUrl: String
     let eventImageUrl: String
+    let eventId: Int
+    let ticketId: Int
 }
 
 struct HomeView_Previews: PreviewProvider {
@@ -396,9 +405,8 @@ struct HomeView_Previews: PreviewProvider {
 struct TicketDetailView_Previews: PreviewProvider {
     static var previews: some View {
         TicketDetailView(tickets: [
-            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400"),
-            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400")
+            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400", eventId: 1, ticketId: 1),
+            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400", eventId: 2, ticketId: 2)
         ])
     }
 }
-

@@ -11,12 +11,14 @@ import WebKit
 struct MyWebView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var showNavigationBars: Bool = true
-    @State private var nfcButtonOffset: CGFloat = 0.0
     @ObservedObject private var nfcViewModel = NFCViewModel()
     @State private var showErrorView = false
     @State private var webViewReloadTrigger = UUID()
-    
+    @State private var stampID: Int?
+
     var urlToLoad: String
+    var eventID: String
+    var ticketID: String
 
     var body: some View {
         NavigationView {
@@ -28,10 +30,20 @@ struct MyWebView: View {
                 VStack(spacing: 0) {
                     setupNavigationBar()
                     ZStack {
-                        WebView(urlToLoad: urlToLoad, reloadTrigger: webViewReloadTrigger, onError: {
+                        WebView(urlToLoad: urlToLoad, reloadTrigger: webViewReloadTrigger, stampID: $stampID, eventID: eventID, ticketID: ticketID, onError: {
                             self.showErrorView = true
                         })
                         .edgesIgnoringSafeArea(.all)
+
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                setupNFCButton()
+                                    .padding(.trailing, 17)
+                                    .padding(.bottom, 20)
+                            }
+                        }
                     }
                 }
                 .navigationBarTitle("", displayMode: .inline)
@@ -43,6 +55,29 @@ struct MyWebView: View {
             nfcViewModel.urlDetected = { url in
                 self.handleURL(url)
             }
+        }
+        .onChange(of: stampID) { newStampID in
+            if let stampID = newStampID {
+                callNfcTaggingFunction(stampID: stampID)
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+    }
+
+    @ViewBuilder
+    private func setupNFCButton() -> some View {
+        Button(action: {
+            nfcViewModel.beginScanning()
+        }) {
+            Image("NFCButton_Light")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .clipShape(Circle())
+                .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: 10)
+                .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: -10)
+                .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: -10)
+                .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: 10)
         }
         .navigationBarBackButtonHidden(true)
     }
@@ -60,7 +95,7 @@ struct MyWebView: View {
                 Spacer()
                 Text("        ")
                 Spacer()
-                Text("         ")
+                Text("        ")
             }
             .padding()
             .frame(height: 44)
@@ -75,35 +110,56 @@ struct MyWebView: View {
     private func handleURL(_ url: String) {
         nfcViewModel.handleDetectedURL(url: url)
     }
-    
+
+    private func handleNFC() {
+        nfcViewModel.beginScanning()
+        nfcViewModel.urlDetected = { url in
+            nfcViewModel.handleStampTagging(eventToken: url) { stampID in
+                if let stampID = stampID {
+                    self.stampID = stampID
+                    print("Received stampID: \(stampID)")
+                } else {
+                    print("Failed to get stamp ID")
+                }
+            }
+        }
+    }
+
+    private func callNfcTaggingFunction(stampID: Int) {
+        guard let webView = getWebView() else {
+            print("WebView not found")
+            return
+        }
+        let js = "nfcTagging(\(stampID));"
+        webView.evaluateJavaScript(js) { (result, error) in
+            if let error = error {
+                print("Error calling nfcTagging: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func getWebView() -> WKWebView? {
+        for subview in UIApplication.shared.windows.first?.rootViewController?.view.subviews ?? [] {
+            if let webView = subview as? WKWebView {
+                return webView
+            }
+        }
+        return nil
+    }
+
     private func reloadWebView() {
         self.showErrorView = false
         self.webViewReloadTrigger = UUID()
     }
-
-    private func cleanURL(_ url: String) -> String {
-        let pattern = "[^a-zA-Z0-9:/?._-]"
-        let regex = try? NSRegularExpression(pattern: pattern, options: [])
-        let range = NSRange(location: 0, length: url.utf16.count)
-        let cleanedUrl = regex?.stringByReplacingMatches(in: url, options: [], range: range, withTemplate: "") ?? url
-        return cleanedUrl
-    }
-
-    private func correctNFCUrl(_ url: String) -> String {
-        if let range = url.range(of: "?nfc") {
-            let prefix = url[..<range.upperBound]
-            let suffix = url[range.upperBound...]
-            if !suffix.hasPrefix("=") {
-                return "\(prefix)=\(suffix)"
-            }
-        }
-        return url
-    }
 }
+
 
 struct WebView: UIViewRepresentable {
     var urlToLoad: String
     var reloadTrigger: UUID
+    @Binding var stampID: Int?
+    var eventID: String
+    var ticketID: String
     var onError: () -> Void
 
     func makeUIView(context: Context) -> WKWebView {
@@ -114,17 +170,25 @@ struct WebView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        // Load the request only when reloadTrigger changes
         if context.coordinator.previousReloadTrigger != reloadTrigger {
             loadRequest(in: uiView)
             context.coordinator.previousReloadTrigger = reloadTrigger
         }
+
+        if let stampID = stampID {
+            let js = "nfcTagging(\(stampID));"
+            uiView.evaluateJavaScript(js) { (result, error) in
+                if let error = error {
+                    print("Error calling nfcTagging: \(error.localizedDescription)")
+                }
+            }
+        }
     }
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-    
+
     private func loadRequest(in webView: WKWebView) {
         guard let url = URL(string: self.urlToLoad) else {
             print("Invalid URL: \(self.urlToLoad)")
@@ -144,9 +208,27 @@ struct WebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Load finished successfully
-            print("WebView did finish navigation")
-            parent.onError = {}
+            // 기존 initWeb 호출 유지
+            let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken") ?? ""
+            let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") ?? ""
+            let eventID = parent.eventID
+            let ticketID = parent.ticketID
+            let initWebJS = "initWeb('\(accessToken)', '\(refreshToken)', '\(eventID)', '\(ticketID)', true);"
+            webView.evaluateJavaScript(initWebJS) { (result, error) in
+                if let error = error {
+                    print("Error calling initWeb: \(error.localizedDescription)")
+                }
+            }
+
+            // 새로운 nfcTagging 호출 추가
+            if let stampID = parent.stampID {
+                let nfcTaggingJS = "nfcTagging(\(stampID));"
+                webView.evaluateJavaScript(nfcTaggingJS) { (result, error) in
+                    if let error = error {
+                        print("Error calling nfcTagging: \(error.localizedDescription)")
+                    }
+                }
+            }
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -160,6 +242,9 @@ struct WebView: UIViewRepresentable {
         }
     }
 }
+
+
+
 
 struct ErrorView: View {
     var onRetry: () -> Void
@@ -175,7 +260,7 @@ struct ErrorView: View {
                     .frame(width: 115, height: 90)
                     .padding(.top, 150)
                     .tracking(-0.02)
-                
+
                 VStack {
                     Text("현재 접속이 원활하지 않아요.")
                         .font(.system(size: 22))
@@ -192,10 +277,10 @@ struct ErrorView: View {
                         .tracking(-0.02)
                         .foregroundColor(.gray)
                 }
-                
+
                 submitButton
                     .padding(.top, 40)
-                
+
                 VStack{
                     Button(action: onRetry) {
                         Text("다시 시도")
@@ -206,7 +291,7 @@ struct ErrorView: View {
                     .padding(25)
                     .multilineTextAlignment(.center)
                 }
-                
+
                 Spacer()
             }
             .background(Color.white) // 배경색을 흰색으로 고정
@@ -215,7 +300,7 @@ struct ErrorView: View {
         .navigationBarBackButtonHidden(true)
         .preferredColorScheme(.light) // 라이트 모드로 고정
     }
-    
+
     @ViewBuilder
     private func setupNavigationBar() -> some View {
         HStack {
@@ -223,15 +308,16 @@ struct ErrorView: View {
                 self.presentationMode.wrappedValue.dismiss()
             }) {
                 Image("back_arrow")
+                    .padding(.leading, 15)
             }
             .frame(alignment: .leading)
-            
+
             Spacer()
-            
+
             Text("      ")
-            
+
             Spacer()
-            
+
             Text("      ")
         }
         .padding()
@@ -256,12 +342,6 @@ struct ErrorView: View {
     }
 }
 
-struct MyWebView_Previews: PreviewProvider {
-    static var previews: some View {
-        MyWebView(urlToLoad: "https://xive.co.kr/fromUs")
-    }
-}
-
 struct ErrorView_Previews: PreviewProvider {
     static var previews: some View {
         ErrorView {
@@ -269,5 +349,4 @@ struct ErrorView_Previews: PreviewProvider {
         }
     }
 }
-
 

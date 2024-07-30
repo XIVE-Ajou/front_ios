@@ -180,6 +180,7 @@ struct OneToOneView: View {
                 self.presentationMode.wrappedValue.dismiss()
             }) {
                 Image("back_arrow")
+                    .padding(.leading, 15)
             }
             
             Spacer()

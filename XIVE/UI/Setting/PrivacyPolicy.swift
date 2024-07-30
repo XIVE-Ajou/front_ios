@@ -187,6 +187,7 @@ struct PrivacyPolicyView: View {
                 presentationMode.wrappedValue.dismiss()
             }) {
                 Image("back_arrow")
+                    .padding(.leading, 15)
             }
             
             Spacer()
