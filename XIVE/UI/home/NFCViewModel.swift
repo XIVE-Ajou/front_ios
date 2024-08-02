@@ -13,7 +13,7 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
     @Published var nfcContent = ""
     var urlDetected: ((String) -> Void)?
     @Published var urlToLoad: String?
-
+    
     // 서버 응답 변수들
     @Published var eventWebUrl: String? {
         didSet {
@@ -67,6 +67,8 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
                         self.nfcContent = self.extractContent(from: text)
                         self.urlDetected?(self.nfcContent)
                         self.handleDetectedURL(url: self.nfcContent)
+                        // 티켓 태그 날짜를 저장
+                        UserDefaults.standard.set(Date(), forKey: "ticketTaggedDate")
                     }
                 }
             }

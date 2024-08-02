@@ -241,7 +241,7 @@ struct TicketDetailView: View {
                                         .scaledToFit()
                                         .frame(width: 400, height: 400)
                                         .cornerRadius(20)
-                                        .shadow(color: .gray, radius: 20, x: 0, y: 2)
+                                        .shadow(color: .gray, radius: 20, x: 0, y: 3)
                                         .padding(.top, 150)
                                 }
                                 .tag(index)

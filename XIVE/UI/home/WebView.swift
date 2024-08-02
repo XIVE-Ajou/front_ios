@@ -68,6 +68,16 @@ struct MyWebView: View {
     private func setupNFCButton() -> some View {
         Button(action: {
             nfcViewModel.beginScanning()
+            nfcViewModel.urlDetected = { url in
+                nfcViewModel.handleStampTagging(eventToken: url) { stampID in
+                    if let stampID = stampID {
+                        self.stampID = stampID
+                        print("Received stampID: \(stampID)")
+                    } else {
+                        print("Failed to get stamp ID")
+                    }
+                }
+            }
         }) {
             Image("NFCButton_Light")
                 .resizable()
@@ -242,9 +252,6 @@ struct WebView: UIViewRepresentable {
         }
     }
 }
-
-
-
 
 struct ErrorView: View {
     var onRetry: () -> Void

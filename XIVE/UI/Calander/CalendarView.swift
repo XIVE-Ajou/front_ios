@@ -35,7 +35,9 @@ extension View {
         
         let firstWeekDay = calendar.component(.weekday, from: range.first!)
         
-        for index in Array(0..<firstWeekDay - 1).reversed() {
+        let adjustedFirstWeekDay = (firstWeekDay + 5) % 7 + 1 // Adjust the weekday to start from Monday
+        
+        for index in Array(0..<adjustedFirstWeekDay - 1).reversed() {
             guard let date = calendar.date(byAdding: .day, value: -index - 1, to: range.first!) else { return days }
             let shortSymbol = formatter.string(from: date)
             
@@ -45,11 +47,11 @@ extension View {
         range.forEach { date in
             let shortSymbol = formatter.string(from: date)
             let matchingEvents = ticketData.filter { ticket in
-                guard let startDate = ticket["startDate"] as? String,
+                guard let eventDay = ticket["eventDay"] as? String,
                       let isPurchase = ticket["isPurchase"] as? Bool, isPurchase else { return false }
                 let formatter = DateFormatter()
                 formatter.dateFormat = "yyyy년 MM월 dd일"
-                let ticketDate = formatter.date(from: startDate)
+                let ticketDate = formatter.date(from: eventDay)
                 return calendar.isDate(ticketDate ?? date, inSameDayAs: date)
             }
             
@@ -58,18 +60,18 @@ extension View {
                       let eventName = ticket["eventName"] as? String,
                       let eventType = ticket["eventType"] as? String,
                       let eventPlace = ticket["eventPlace"] as? String,
-                      let startDate = ticket["startDate"] as? String,
+                      let eventDay = ticket["eventDay"] as? String,
                       let endDate = ticket["endDate"] as? String,
                       let eventImageUrl = ticket["eventImageUrl"] as? String else {
                     return nil
                 }
-                return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(startDate) ~ \(endDate)", imageName: eventImageUrl)
+                return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(eventDay) ~ \(endDate)", imageName: eventImageUrl)
             }
             
             days.append(.init(shortSymbol: shortSymbol, date: date, events: events))
         }
         
-        let lastWeekDay = 7 - calendar.component(.weekday, from: range.last!)
+        let lastWeekDay = 7 - ((calendar.component(.weekday, from: range.last!) + 5) % 7 + 1)
         
         if (lastWeekDay > 0) {
             for index in 0..<lastWeekDay {
@@ -198,12 +200,12 @@ struct CalendarViewView: View {
                                   let eventName = ticket["eventName"] as? String,
                                   let eventType = ticket["eventType"] as? String,
                                   let eventPlace = ticket["eventPlace"] as? String,
-                                  let startDate = ticket["startDate"] as? String,
+                                  let eventDay = ticket["eventDay"] as? String,
                                   let endDate = ticket["endDate"] as? String,
                                   let eventImageUrl = ticket["eventImageUrl"] as? String else {
                                 return nil
                             }
-                            return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(startDate) ~ \(endDate)", imageName: eventImageUrl)
+                            return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(eventDay) ~ \(endDate)", imageName: eventImageUrl)
                         }
                         self.monthDates = extractDates(selectedMonth, ticketData: ticketData)
                         self.filterContentCards(for: self.selectedDate)
@@ -267,8 +269,8 @@ struct CalendarViewView: View {
         formatter.dateFormat = "yyyy년 MM월 dd일"
         
         self.filteredContentCards = contentCards.filter { card in
-            guard let startDate = ticketData.first(where: { $0["ticketId"] as? Int == card.id })?["startDate"] as? String,
-                  let ticketDate = formatter.date(from: startDate) else { return false }
+            guard let eventDay = ticketData.first(where: { $0["ticketId"] as? Int == card.id })?["eventDay"] as? String,
+                  let ticketDate = formatter.date(from: eventDay) else { return false }
             return calendar.isDate(ticketDate, inSameDayAs: date)
         }
         self.showTicketDetail = !self.filteredContentCards.isEmpty
@@ -451,7 +453,7 @@ struct CalendarViewView: View {
                         VStack {
                             ZStack(alignment: .bottomTrailing) {
                                 if let imageName = day.events.first?.imageName {
-                                    KFImage(URL(string: imageName))
+                                    Image("Calendar_Ticket")//KFImage(URL(string: imageName))
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 78)
@@ -506,7 +508,7 @@ struct CalendarViewView: View {
     func dayColor(for day: String) -> Color {
         let weekdays = ["월", "화", "수", "목", "금", "토", "일"]
         let dayIndex = weekdays.firstIndex(of: day) ?? 0
-        let selectedDayIndex = Calendar.current.component(.weekday, from: selectedDate ?? Date.distantPast) - 1
+        let selectedDayIndex = Calendar.current.component(.weekday, from: selectedDate ?? Date.distantPast) - 2
         return dayIndex == selectedDayIndex ? .XIVE_Purple : .secondary
     }
     
@@ -593,4 +595,3 @@ struct ContentView_Previews: PreviewProvider {
         CalendarViewView(safeArea: EdgeInsets())
     }
 }
-
