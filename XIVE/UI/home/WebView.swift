@@ -10,11 +10,12 @@ import WebKit
 
 struct MyWebView: View {
     @Environment(\.presentationMode) var presentationMode
-    @State private var showNavigationBars: Bool = true
+    @State private var showNavigationBars: Bool = false
     @ObservedObject private var nfcViewModel = NFCViewModel()
     @State private var showErrorView = false
     @State private var webViewReloadTrigger = UUID()
     @State private var stampID: Int?
+    @State private var showNFCButton: Bool = false // Added state variable
 
     var urlToLoad: String
     var eventID: String
@@ -28,20 +29,51 @@ struct MyWebView: View {
                 }
             } else {
                 VStack(spacing: 0) {
-                    setupNavigationBar()
+                    if showNavigationBars {
+                        setupNavigationBar()
+                            .transition(.move(edge: .top))
+                            .animation(.easeInOut, value: showNavigationBars)
+                    }
+
                     ZStack {
-                        WebView(urlToLoad: urlToLoad, reloadTrigger: webViewReloadTrigger, stampID: $stampID, eventID: eventID, ticketID: ticketID, onError: {
-                            self.showErrorView = true
-                        })
-                        .edgesIgnoringSafeArea(.all)
+                        GeometryReader { geometry in
+                            WebView(
+                                urlToLoad: urlToLoad,
+                                reloadTrigger: webViewReloadTrigger,
+                                stampID: $stampID,
+                                eventID: eventID,
+                                ticketID: ticketID,
+                                onError: {
+                                    self.showErrorView = true
+                                },
+                                showNFCButton: $showNFCButton // Pass the binding
+                            )
+                            .edgesIgnoringSafeArea(.all)
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { value in
+                                        if value.translation.height > 0 { // 위에서 아래로 스크롤할 때
+                                            withAnimation {
+                                                self.showNavigationBars = true
+                                            }
+                                        } else if value.translation.height < 0 { // 아래에서 위로 스크롤할 때
+                                            withAnimation {
+                                                self.showNavigationBars = false
+                                            }
+                                        }
+                                    }
+                            )
+                        }
 
                         VStack {
                             Spacer()
                             HStack {
                                 Spacer()
-                                setupNFCButton()
-                                    .padding(.trailing, 17)
-                                    .padding(.bottom, 20)
+                                if showNFCButton { // Conditionally show the button
+                                    setupNFCButton()
+                                        .padding(.trailing, 15)
+                                        .transition(.opacity) // Optional: Add transition for smooth appearance
+                                }
                             }
                         }
                     }
@@ -109,30 +141,17 @@ struct MyWebView: View {
             }
             .padding()
             .frame(height: 44)
-            Divider().background(Color.secondary)
-            .background(Color.white)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .multilineTextAlignment(.leading)
+            Divider()
+                .background(Color.secondary)
+                .background(Color.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.leading)
         }
         .background(Color.white)
     }
 
     private func handleURL(_ url: String) {
         nfcViewModel.handleDetectedURL(url: url)
-    }
-
-    private func handleNFC() {
-        nfcViewModel.beginScanning()
-        nfcViewModel.urlDetected = { url in
-            nfcViewModel.handleStampTagging(eventToken: url) { stampID in
-                if let stampID = stampID {
-                    self.stampID = stampID
-                    print("Received stampID: \(stampID)")
-                } else {
-                    print("Failed to get stamp ID")
-                }
-            }
-        }
     }
 
     private func callNfcTaggingFunction(stampID: Int) {
@@ -163,7 +182,6 @@ struct MyWebView: View {
     }
 }
 
-
 struct WebView: UIViewRepresentable {
     var urlToLoad: String
     var reloadTrigger: UUID
@@ -171,9 +189,16 @@ struct WebView: UIViewRepresentable {
     var eventID: String
     var ticketID: String
     var onError: () -> Void
+    @Binding var showNFCButton: Bool // Added binding
 
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
+        let contentController = WKUserContentController()
+        contentController.add(context.coordinator, name: "iosHandler")
+
+        let config = WKWebViewConfiguration()
+        config.userContentController = contentController
+
+        let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         loadRequest(in: webView)
         return webView
@@ -209,7 +234,7 @@ struct WebView: UIViewRepresentable {
         webView.load(URLRequest(url: url))
     }
 
-    class Coordinator: NSObject, WKNavigationDelegate {
+    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         var parent: WebView
         var previousReloadTrigger: UUID?
 
@@ -217,8 +242,32 @@ struct WebView: UIViewRepresentable {
             self.parent = parent
         }
 
+        // JavaScript에서 호출되는 함수
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            if message.name == "iosHandler", let messageBody = message.body as? String {
+                print("JavaScript 메시지 수신: \(messageBody)")
+                handleJavaScriptMessage(messageBody)
+            }
+        }
+
+        func handleJavaScriptMessage(_ message: String) {
+            // Update the showNFCButton based on the message
+            DispatchQueue.main.async {
+                switch message {
+                case "1":
+                    self.parent.showNFCButton = true
+                case "2":
+                    self.parent.showNFCButton = false
+                case "3":
+                    self.parent.showNFCButton = true
+                default:
+                    break
+                }
+            }
+            print("JavaScript에서 받은 메시지: \(message)")
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // 기존 initWeb 호출 유지
             let accessToken = UserDefaults.standard.string(forKey: "User_AccessToken") ?? ""
             let refreshToken = UserDefaults.standard.string(forKey: "User_RefreshToken") ?? ""
             let eventID = parent.eventID
@@ -227,10 +276,10 @@ struct WebView: UIViewRepresentable {
             webView.evaluateJavaScript(initWebJS) { (result, error) in
                 if let error = error {
                     print("Error calling initWeb: \(error.localizedDescription)")
+                    print("Calling initWeb with accessToken: \(accessToken), refreshToken: \(refreshToken), eventID: \(eventID), ticketID: \(ticketID)")
                 }
             }
 
-            // 새로운 nfcTagging 호출 추가
             if let stampID = parent.stampID {
                 let nfcTaggingJS = "nfcTagging(\(stampID));"
                 webView.evaluateJavaScript(nfcTaggingJS) { (result, error) in
@@ -356,4 +405,3 @@ struct ErrorView_Previews: PreviewProvider {
         }
     }
 }
-

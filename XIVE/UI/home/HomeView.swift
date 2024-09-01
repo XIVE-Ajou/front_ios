@@ -191,11 +191,12 @@ struct HomeView: View {
                         self.tickets = ticketData.compactMap { data in
                             guard let eventWebUrl = data["eventWebUrl"] as? String,
                                   let eventImageUrl = data["eventImageUrl"] as? String,
+                                  let eventBackgroundImageUrl = data["eventBackgroundImageUrl"] as? String,
                                   let eventId = data["eventId"] as? Int,
                                   let ticketId = data["ticketId"] as? Int else {
                                 return nil
                             }
-                            return Ticket(eventWebUrl: eventWebUrl, eventImageUrl: eventImageUrl, eventId: eventId, ticketId: ticketId)
+                            return Ticket(eventWebUrl: eventWebUrl, eventImageUrl: eventImageUrl, eventBackgroundImageUrl: eventBackgroundImageUrl, eventId: eventId, ticketId: ticketId)
                         }
                         self.showTicketDetail = true
                     }
@@ -215,24 +216,27 @@ struct TicketDetailView: View {
     @State private var selectedIndex = 0
     @State private var timer: Timer? = nil
     @State private var autoScrollEnabled = false  // 자동 스크롤 활성화 상태
-    
+
     @StateObject private var nfcViewModel = NFCViewModel()
     var tickets: [Ticket]
-    
+
     var body: some View {
         GeometryReader { geometry in
             NavigationView {
                 ZStack {
+                    // Background image
+                    KFImage(URL(string: tickets[selectedIndex].eventBackgroundImageUrl))
+                        .resizable()
+                        
+                        .frame(width: geometry.size.width, height: .infinity) // Use geometry.size.height instead of .infinity
+                        .clipped() // Ensure the image does not overflow the container
+                        .ignoresSafeArea(edges: .all) // Ignore safe areas to fill the entire screen
+
+                    // Foreground content
                     VStack(spacing: 0) {
-                        setupNavigationBar(safeArea: geometry.safeAreaInsets)
-                            .background(Color.white)
-                            .frame(height: 56)
                         Spacer()
-                    }
-                    .zIndex(1)
-                    
-                    VStack(spacing: 0) {
-                        Spacer()
+
+                        // Ticket display
                         TabView(selection: $selectedIndex) {
                             ForEach(tickets.indices, id: \.self) { index in
                                 NavigationLink(destination: MyWebView(urlToLoad: tickets[index].eventWebUrl, eventID: "\(tickets[index].eventId)", ticketID: "\(tickets[index].ticketId)")) {
@@ -241,8 +245,9 @@ struct TicketDetailView: View {
                                         .scaledToFit()
                                         .frame(width: 400, height: 400)
                                         .cornerRadius(20)
-                                        .shadow(color: .gray, radius: 20, x: 0, y: 3)
-                                        .padding(.top, 150)
+                                        .shadow(color: .black, radius: 20, x: 0, y: 3) // Set shadow color to black
+                                        .padding(.top, 180)
+                                        .padding(.bottom, 60) // Padding to prevent shadow clipping
                                 }
                                 .tag(index)
                             }
@@ -257,25 +262,27 @@ struct TicketDetailView: View {
                             stopTimer()
                         }
 
+                        // Ticket view indicator with transparent background
                         TicketViewIndicator(currentPage: selectedIndex, total: tickets.count)
-                            .padding(.bottom, 50)
+                            .padding(.bottom, 20)
+                            .background(Color.clear) // Transparent background
 
                         Spacer()
-                        
+
                         setupNFCButton()
                             .padding(.trailing, 0)
                     }
-
-                    .background(
-                        Image("Sogroup_Blur")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    )
-                    .ignoresSafeArea(edges: .bottom)
                     .zIndex(0)
+
+                    // Navigation bar (kept at the top and does not move)
+                    VStack {
+                        setupNavigationBar(safeArea: geometry.safeAreaInsets)
+                            .background(Color.white)
+                            .frame(height: 56)
+                        Spacer()
+                    }
+                    .zIndex(1) // Ensure navigation bar is always on top
                 }
-                .background(Color.white)
                 .onAppear {
                     nfcViewModel.urlDetected = { url in
                         self.handleURL(url)
@@ -286,7 +293,7 @@ struct TicketDetailView: View {
             .preferredColorScheme(.light)
         }
     }
-    
+
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { _ in
             withAnimation {
@@ -294,12 +301,12 @@ struct TicketDetailView: View {
             }
         }
     }
-    
+
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
     }
-    
+
     @ViewBuilder
     private func setupNavigationBar(safeArea: EdgeInsets) -> some View {
         VStack(spacing: 0) {
@@ -316,13 +323,13 @@ struct TicketDetailView: View {
                     }
                     .hidden()
                 )
-                
+
                 Spacer()
-                
+
                 Image("XIVE_textLogo_small")
-                
+
                 Spacer()
-                
+
                 Button(action: {
                     self.navigateToCalendar = true
                 }) {
@@ -340,11 +347,10 @@ struct TicketDetailView: View {
             Divider().background(Color.secondary)
                 .background(Color.white)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white)
         .navigationBarBackButtonHidden(true)
     }
-    
+
     @ViewBuilder
     private func setupNFCButton() -> some View {
         HStack {
@@ -352,7 +358,7 @@ struct TicketDetailView: View {
             Button(action: {
                 nfcViewModel.beginScanning()
             }) {
-                Image("Subtract")
+                Image("NFCButton_Light")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 80, height: 80)
@@ -361,17 +367,25 @@ struct TicketDetailView: View {
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: -10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: 10, y: -10)
                     .shadow(color: .gray.opacity(0.25), radius: 5, x: -10, y: 10)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 30)
                     .padding(.trailing, 15)
             }
         }
         .navigationBarBackButtonHidden(true)
     }
-    
+
     private func handleURL(_ url: String) {
         nfcViewModel.handleDetectedURL(url: url)
     }
 }
+
+
+
+
+
+
+
+
 
 struct TicketViewIndicator: View {
     let currentPage: Int
@@ -392,6 +406,7 @@ struct Ticket: Identifiable {
     let id = UUID()
     let eventWebUrl: String
     let eventImageUrl: String
+    let eventBackgroundImageUrl: String  // New property for background image URL
     let eventId: Int
     let ticketId: Int
 }
@@ -405,8 +420,8 @@ struct HomeView_Previews: PreviewProvider {
 struct TicketDetailView_Previews: PreviewProvider {
     static var previews: some View {
         TicketDetailView(tickets: [
-            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400", eventId: 1, ticketId: 1),
-            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400", eventId: 2, ticketId: 2)
+            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400", eventBackgroundImageUrl: "https://via.placeholder.com/800x600", eventId: 1, ticketId: 1),
+            Ticket(eventWebUrl: "https://example.com", eventImageUrl: "https://via.placeholder.com/400", eventBackgroundImageUrl: "https://via.placeholder.com/800x600", eventId: 2, ticketId: 2)
         ])
     }
 }

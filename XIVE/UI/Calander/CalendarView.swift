@@ -60,12 +60,12 @@ extension View {
                       let eventName = ticket["eventName"] as? String,
                       let eventType = ticket["eventType"] as? String,
                       let eventPlace = ticket["eventPlace"] as? String,
-                      let eventDay = ticket["eventDay"] as? String,
+                      let startDate = ticket["startDate"] as? String,
                       let endDate = ticket["endDate"] as? String,
                       let eventImageUrl = ticket["eventImageUrl"] as? String else {
                     return nil
                 }
-                return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(eventDay) ~ \(endDate)", imageName: eventImageUrl)
+                return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(startDate) ~ \(endDate)", imageName: eventImageUrl)
             }
             
             days.append(.init(shortSymbol: shortSymbol, date: date, events: events))
@@ -201,11 +201,12 @@ struct CalendarViewView: View {
                                   let eventType = ticket["eventType"] as? String,
                                   let eventPlace = ticket["eventPlace"] as? String,
                                   let eventDay = ticket["eventDay"] as? String,
+                                  let startDate = ticket["startDate"] as? String,
                                   let endDate = ticket["endDate"] as? String,
                                   let eventImageUrl = ticket["eventImageUrl"] as? String else {
                                 return nil
                             }
-                            return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(eventDay) ~ \(endDate)", imageName: eventImageUrl)
+                            return ContentCard(id: ticketId, title: eventType, subtitle: eventName, location: eventPlace, dateRange: "\(startDate) ~ \(endDate)", imageName: eventImageUrl)
                         }
                         self.monthDates = extractDates(selectedMonth, ticketData: ticketData)
                         self.filterContentCards(for: self.selectedDate)
@@ -453,7 +454,7 @@ struct CalendarViewView: View {
                         VStack {
                             ZStack(alignment: .bottomTrailing) {
                                 if let imageName = day.events.first?.imageName {
-                                    Image("Calendar_Ticket")//KFImage(URL(string: imageName))
+                                    KFImage(URL(string: imageName)) //Image("Calendar_Ticket")
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 52, height: 78)

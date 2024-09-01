@@ -47,7 +47,7 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         }
 
         nfcSession = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: true)
-        nfcSession?.alertMessage = "티켓의 하단을 휴대폰 상단에 태그해주세요."
+        nfcSession?.alertMessage = "스탬프를 휴대폰 상단에 태그해주세요."
         nfcSession?.begin()
         print(eventWebUrl ?? "No eventWebUrl")
     }
@@ -287,3 +287,4 @@ class NFCViewModel: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
         }.resume()
     }
 }
+
